@@ -1,0 +1,10 @@
+# motor: postgres
+# descripcion: 
+# vpn: no
+# datos-reales: si
+[lectura]
+host=127.0.0.1
+port=5432
+dbname=
+user=
+password=

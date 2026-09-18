@@ -1,0 +1,14 @@
+{
+  "name": "clarabella",
+  "description": "La vaca que hace todo: kit de skills de Claude Code para resolver tickets.",
+  "owner": {
+    "name": "clarabella"
+  },
+  "plugins": [
+    {
+      "name": "clarabella",
+      "source": "./",
+      "description": "Flujo manual para resolver tickets paso a paso."
+    }
+  ]
+}

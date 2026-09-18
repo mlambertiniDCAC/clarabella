@@ -1,0 +1,8 @@
+{
+  "name": "clarabella",
+  "version": "0.3.0",
+  "description": "Una vaca a la que le mandás a resolver tickets (desarrollo y soporte): prepara repos, planea, documenta y ejecuta tests, implementa, resume y envía a review con Arcanist.",
+  "author": {
+    "name": "clarabella"
+  }
+}
