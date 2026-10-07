@@ -1,6 +1,6 @@
 ---
 name: ciclo-ticket
-description: Usar cuando el usuario quiere que el desarrollo de un ticket del workspace dcac-ia-context se repita solo hasta dar con la implementación correcta — el Escribano cierra la spec con el usuario antes de arrancar, y después el ciclo prepara, juzga, implementa, testea y vuelve a empezar desde donde falló, y cada agente corrige solo lo que se marcó; las dudas que aparecen en el camino se resuelven como decisiones provisorias en vez de frenar, y el usuario las confirma al final, hasta cumplir la definición de terminado, estancarse o agotar el presupuesto. Triggers — "corré T##### en ciclo", "que se repita hasta que ande", "modo ciclo para T#####", "iterá T##### hasta la implementación correcta". NO envía a review ni commitea.
+description: Usar cuando el usuario quiere que el desarrollo de un ticket del workspace dcac-ia-context se repita solo hasta dar con la implementación correcta — el Escribano cierra la spec con el usuario antes de arrancar, y después el ciclo prepara, revisa, implementa, testea y vuelve a empezar desde donde falló, y cada agente corrige solo lo que se marcó; las dudas que aparecen en el camino se resuelven como decisiones provisorias en vez de frenar, y el usuario las confirma al final, hasta cumplir la definición de terminado, estancarse o agotar el presupuesto. Triggers — "corré T##### en ciclo", "que se repita hasta que ande", "modo ciclo para T#####", "iterá T##### hasta la implementación correcta". NO envía a review ni commitea.
 ---
 
 # El ciclo
@@ -29,7 +29,7 @@ anotalo arriba de `registro.md`:
 
 **Escritura.** Despachá al `escribano` sobre `spec.md`. **No se la presentes al usuario:**
 cada punto se toma con su propuesta por defecto, como provisoria (`P#` en
-`juicio/provisorias.md`), y queda en `spec.md` § Decisiones de contrato marcada como
+`revision/provisorias.md`), y queda en `spec.md` § Decisiones de contrato marcada como
 provisoria. Los precedentes se aplican tal cual. Al final el usuario confirma o veta todo
 junto.
 
@@ -39,7 +39,8 @@ El ciclo termina bien cuando se cumplen **todas** a la vez:
 
 1. El RED dio lo esperado sobre la versión vigente de `tests.md`.
 2. El GREEN pasa completo, con un subagente nuevo, sobre el código actual.
-3. El juicio de la implementación no tiene observaciones sostenidas.
+3. `reglas.py` sin alertas abiertas (confirmadas y sin corregir) y la última revisión de la
+   implementación sin bloqueantes.
 4. No hay dudas abiertas: cada una está respondida, decidida como menor o tomada como
    provisoria.
 
@@ -54,14 +55,15 @@ Fase 1 de `resolver-ticket`: repos, entorno en background, agentes generativos d
 tests, Baqueanos para sus dudas. En el ciclo, el Baqueano puede clasificar `DECISIÓN MENOR`
 y `PROVISORIA` (ver `baqueano`): las dudas no frenan.
 
-### Etapa 2 — Juicio del plan y los tests
-Fase 2 de `resolver-ticket` (`juicio-ticket`), con un cambio: **la sentencia reemplaza la
-aprobación del usuario.** Si el Juez no sostuvo nada, plan y tests quedan aprobados. Lo que
-el Juez escala pasa por el Baqueano, que lo resuelve como menor o como provisoria.
+### Etapa 2 — Revisión del plan y los tests
+Fase 2 de `resolver-ticket` (`revisar-ticket`, modo plan-tests), con un cambio: **"sin
+bloqueantes" reemplaza la aprobación del usuario.** Los DESACUERDOS de los correctores
+pasan por el Baqueano, que los resuelve como menor o como provisoria.
 
 ### Etapa 3 — RED
-Como en `resolver-ticket` 3.1. Si no da lo esperado, la falla vuelve al agente de tests
-(`test-no-discrimina`, `test-mal-documentado`) y el juicio se reabre para `tests.md`. Una
+Como en `resolver-ticket` 3.1. Si no da lo esperado, un sonnet nuevo corrige los casos
+(`test-no-discrimina`, `test-mal-documentado`), corre `trazabilidad.py` y se repite el RED
+de esos casos. Una
 `regresion-preexistente` pausa: el ciclo no puede arreglarla.
 
 ### Etapa 4 — Las vueltas de implementación
@@ -69,17 +71,19 @@ Cada vuelta:
 
 1. **Implementar.** Los implementadores son agentes generativos (ver "La vida del
    implementador"), uno por repo si el ticket toca varios, en paralelo.
-2. **GREEN** con un subagente nuevo. El reporte va a `juicio/testeo/green-<n>.md`.
-3. **Juicio de la implementación**, si el GREEN pasó completo.
+2. **GREEN** con un subagente nuevo. El reporte va a `revision/testeo/green-<n>.md`.
+3. **Revisión de la implementación**, si el GREEN pasó completo: `revisar-ticket` modo
+   implementación. La primera vez sobre el diff completo; después, solo el delta desde la
+   última revisión (`revision/ultima-revision-<ms>.txt`).
 4. **Evaluar** la definición de terminado. Si no se cumple, cada falla vuelve a quien
    corresponde:
 
 | Falla | Vuelve a | Qué pasa |
 |-------|----------|----------|
 | `bug-implementacion` | El implementador de ese repo | Corrige; la próxima vuelta lo prueba |
-| Observación sostenida en el juicio de la implementación | El implementador | Corrige solo lo marcado; el Juez verifica la corrección |
-| `hueco-del-plan` | El agente del plan | Agrega la parte que falta; el Juez verifica solo ese agregado; después se implementa |
-| `test-mal-documentado` | El agente de tests | Corrige el caso; el Juez verifica solo esa corrección; se repite el RED de ese caso |
+| Hallazgo bloqueante o alerta confirmada | El implementador | Corrige solo lo marcado; GREEN y `reglas.py` en la próxima vuelta |
+| `hueco-del-plan` | Un sonnet nuevo | Agrega la Parte que falta con su `Cubre:`; `trazabilidad.py`; después se implementa |
+| `test-mal-documentado` | Un sonnet nuevo | Corrige el caso; `trazabilidad.py`; se repite el RED de ese caso |
 | `ambiguedad-negocio` | El Baqueano | La resuelve como menor o como provisoria |
 
 5. **Registrar la vuelta** en `registro.md` (ver "Estancamiento").
@@ -91,8 +95,9 @@ Cuando aparece una decisión mayor que la escritura no anticipó, el ciclo no fr
 1. El Baqueano la clasifica `PROVISORIA`: elige la opción más conservadora (la que cambia
    menos, la más fácil de revertir, o la que respalda la práctica previa) y arma el caso
    igual que para el usuario.
-2. El orquestador la registra en `juicio/provisorias.md` con un número (`P1`, `P2`…) y
-   anota qué partes dependen de ella: el agente que la usa la cita en su bitácora.
+2. El orquestador la registra en `revision/provisorias.md` con un número (`P1`, `P2`…) y
+   anota qué partes dependen de ella: el agente que la usa la cita en su artefacto (o en
+   `revision/notas-<ms>.md`, si es el implementador).
 3. El ciclo sigue sobre ese supuesto.
 
 **Nunca son provisorias, siempre pausan:** el módulo financiero (DCP / `ms-decampopagos`),
@@ -101,18 +106,15 @@ equivocado sale caro.
 
 ## El implementador
 
-En el ciclo, el implementador es un agente generativo como los demás: recibe las reglas del
-oficio (`juicio-ticket`), escribe bitácora y se defiende en el juicio de la implementación.
-**No se reemplaza:** se lo retoma con `SendMessage`, con su contexto, y corrige lo que falló.
+En el ciclo, el implementador anota sus desvíos del plan en `revision/notas-<ms>.md`, como
+en el flujo manual. **No se reemplaza:** se lo retoma con `SendMessage`, con su contexto, y corrige lo que falló.
 
-| Falta | Cuándo | Qué pasa |
+| Señal | Cuándo | Qué pasa |
 |-------|--------|----------|
-| `fabricacion` | Un perito probó que su bitácora o su defensa afirman algo falso | Corrige, y se re-verifican por muestreo sus demás afirmaciones |
-| `defensa-perdida` | El Juez sostuvo una observación que defendió | Corrige lo marcado |
 | `sin-progreso` | Dos vueltas seguidas en las que los casos `bug-implementacion` de su repo no bajaron | Antes de la próxima vuelta, el orquestador le pide un diagnóstico: por qué no avanza y qué va a cambiar de enfoque. Si el enfoque entero estaba mal, guarda el trabajo con `git -C .worktrees/T#####-{slug}/<ms> stash push -u -m "T##### impl <ms>"` (se puede recuperar) y el mismo implementador reescribe desde master |
 
-Las faltas van al prontuario y las cuenta el Cronista. Si un implementador ya no está
-disponible, se despacha uno nuevo con el código actual, su bitácora y el último reporte
+`sin-progreso` lo cuenta el Cronista. Si un implementador ya no está disponible, se
+despacha uno nuevo con el código actual, sus notas y el último reporte
 de GREEN, para que siga desde ahí.
 
 ## Cuándo pausa
@@ -120,7 +122,7 @@ de GREEN, para que siga desde ahí.
 | Causa | Qué le muestra al usuario |
 |-------|---------------------------|
 | **Decisión mayor en terreno sensible** (financiero, permisos/seguridad, datos) | El caso armado por el Baqueano. Con la respuesta, el ciclo sigue |
-| **Corrección fallida dos veces** | La observación, los dos intentos y por qué no alcanzaron: el problema suele estar en la spec o en la doc |
+| **Corrección fallida dos veces** | El hallazgo, los dos intentos y por qué no alcanzaron: el problema suele estar en la spec o en la doc |
 | **Regresión preexistente** | El caso que falla en master |
 | **Entorno caído** | Qué contenedor o servicio, sin tocar infra compartida |
 | **Estancamiento** | La firma que se repite y las últimas vueltas |
@@ -131,12 +133,12 @@ Las dos últimas terminan el ciclo.
 ## Estancamiento
 
 Al cerrar cada vuelta, anotá en `registro.md` su **firma**: los casos que fallan con su
-clasificación, más las observaciones sostenidas.
+clasificación, más los hallazgos bloqueantes.
 
 ```markdown
 ## Vuelta 4
-- Firma: C9 bug-implementacion · C12 bug-implementacion · OI2 sostenida
-- Faltas: implementador apigateway-psp (sin-progreso)
+- Firma: C9 bug-implementacion · C12 bug-implementacion · H2 bloqueante
+- sin-progreso: implementador apigateway-psp
 - Provisorias nuevas: P2
 - Tokens de la vuelta: <n>
 ```
@@ -146,10 +148,10 @@ agentes corrijan algo no cuenta como progreso si la firma no cambia.
 
 ## El final
 
-1. **Despachá al `cronista`.** La crónica cuenta todas las vueltas (firma, faltas, costo,
+1. **Despachá al `cronista`.** La crónica cuenta todas las vueltas (firma, sin-progreso, costo,
    qué destrabó cada avance), cuántas dudas aparecieron pese a la escritura, y todas las
    provisorias.
-2. **Provisorias.** Presentale al usuario `juicio/provisorias.md` completo, cada una con su
+2. **Provisorias.** Presentale al usuario `revision/provisorias.md` completo, cada una con su
    caso y lo que depende de ella.
    - **Confirmadas:** pasan a ser decisiones del usuario (van a `spec.md` y, vía crónica,
      al registro de decisiones).
