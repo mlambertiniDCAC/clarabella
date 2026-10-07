@@ -1,6 +1,6 @@
 ---
 name: resolver-ticket
-description: Usar cuando el usuario quiere resolver un ticket (de desarrollo o de soporte) del workspace dcac-ia-context desde el chat, con revisión suya en cada fase — preparación (repos, plan y tests por agentes generativos separados), juicio (Juez, defensa y peritos), implementación (RED, código, GREEN, diff) y entrega (resumen, review, bajar entorno). Triggers — "resolvamos T##### paso a paso", "arranquemos T##### de forma manual", "hagamos T##### sin el pipeline". NO confundir con pipeline-desarrollo (motor autónomo con dashboard); acá el usuario decide en el chat.
+description: Usar cuando el usuario quiere resolver un ticket (de desarrollo o de soporte) del workspace dcac-ia-context desde el chat, con revisión suya en cada fase — preparación (repos, plan y tests por agentes generativos separados), revisión (trazabilidad, reglas y un revisor de una pasada), implementación (RED, código, GREEN, revisión, diff) y entrega (crónica, review, bajar entorno). Triggers — "resolvamos T##### paso a paso", "arranquemos T##### de forma manual", "hagamos T##### sin el pipeline". NO confundir con pipeline-desarrollo (motor autónomo con dashboard); acá el usuario decide en el chat.
 ---
 
 # Resolver ticket
@@ -11,9 +11,9 @@ con el usuario presente — sin dashboard (eso es `pipeline-desarrollo`).
 | Fase | Qué pasa | Termina cuando |
 |------|----------|----------------|
 | **1. Preparación** | Repos listos; un agente generativo escribe el plan y otro los tests, sin verse | Los dos entregaron y sus DUDAS están respondidas |
-| **2. El juicio** | Un Juez juzga plan y tests contra la doc y entre sí; los agentes se defienden; peritos verifican; lo que el Juez sostiene lo corrige el mismo agente, solo en lo marcado | El usuario aprueba la sentencia y los dos artefactos |
-| **3. La implementación** | RED, implementación (en paralelo por repo si conviene), GREEN, juicio de la implementación, diff para validar | El usuario valida el diff y la sentencia |
-| **4. La entrega** | Resumen, review, bajar el entorno | La review salió y el entorno está abajo |
+| **2. Revisión** | Trazabilidad de criterios (script), un revisor sonnet de una pasada, corrección por un agente nuevo | El usuario aprueba plan y tests |
+| **3. La implementación** | RED, implementación (en paralelo por repo si conviene), GREEN, reglas críticas (script) y revisión del diff | El usuario valida el diff |
+| **4. La entrega** | Crónica, review, bajar el entorno | La review salió y el entorno está abajo |
 
 **Modo ciclo, el default.** El objetivo es que el ticket se desarrolle solo, sin
 intervención humana: salvo que el usuario pida explícitamente ir paso a paso, usá
@@ -22,8 +22,8 @@ usuario, las decisiones se toman como provisorias y el usuario ve el resultado a
 Lo que sigue (aprobaciones por fase) es el modo manual, solo cuando el usuario lo pide.
 
 **El hilo principal es el orquestador.** Despacha subagentes, rutea mensajes y le lleva
-al usuario las decisiones. En las fases 1 y 2 no genera ni defiende nada; en la fase 3
-implementa. No reemplaza el criterio de cada skill: cada una trae sus reglas, leelas al
+al usuario las decisiones. En las fases 1 y 2 no genera nada (salvo arreglos de formato que
+pidan los scripts); en la fase 3 implementa. No reemplaza el criterio de cada skill: cada una trae sus reglas, leelas al
 invocarlas.
 
 ## Paso 0 — Fijar la carpeta del ticket
@@ -44,6 +44,9 @@ presentás al usuario en una sola ronda; sus respuestas van a `spec.md` § Decis
 contrato. Los agentes arrancan con la spec escriturada, y las dudas que les queden van al
 Baqueano.
 
+Con la escritura cerrada, el Escribano numera los criterios de `spec.md` (`CA1…CAn`): la
+trazabilidad de la fase 2 cruza esos números.
+
 En la **raíz del workspace dcac-ia-context**:
 
 ```
@@ -53,8 +56,8 @@ docs/{proyecto}/{tipo}/T#####-{slug}/
 ├── plan.md      ← fase 1, agente generativo del plan
 ├── tests.md     ← fase 1, agente generativo de los tests
 ├── registro.md  ← todo el proceso: cada subagente despachado, modelo, duración, tokens
-├── juicio/      ← fases 1-3 (bitácoras, consultas, acusaciones, defensas, peritajes,
-│                  sentencias, correcciones, testeo/ con los reportes de RED y GREEN)
+├── revision/    ← fases 1-3 (consultas del Baqueano, trazabilidad, reglas, revisiones,
+│                  notas de los implementadores, testeo/ con RED y GREEN, hechos.md)
 ├── cronica.md   ← fase 4 (cronista)
 └── borradores/  ← fase 4 (arc diff, comentario del ticket, decisiones nuevas)
 ```
@@ -65,7 +68,7 @@ subagente. Si la sesión no está en la raíz del workspace, usá rutas absoluta
 **Llevá el registro desde el primer subagente.** Por cada uno que despaches, una fila en
 `registro.md` (rol, modelo, resultado) y, cuando termina, la duración y los
 tokens que informe su notificación. Guardá también cada reporte de RED y GREEN en
-`juicio/testeo/` (`red.md`, `green-1.md`, …). El Cronista solo cuenta lo que quedó
+`revision/testeo/` (`red.md`, `green-1.md`, …). El Cronista solo cuenta lo que quedó
 registrado.
 
 ## Fase 1 — Preparación
@@ -88,33 +91,31 @@ Agent(subagent_type: "general-purpose", model: "sonnet", description: "Entorno D
 ```
 
 ### 1.3 Los agentes generativos (subagentes en paralelo)
-Los dos reciben las reglas del oficio de `juicio-ticket` (§ El oficio de un agente
-generativo): copialas en su prompt. **Guardá el id de cada uno**: en el juicio se los
-retoma con `SendMessage` para que se defiendan y corrijan.
+Cada uno trabaja solo desde `spec.md` y no ve el artefacto del otro. **Guardá el id de cada
+uno** solo para pasarle las respuestas a sus DUDAS durante esta fase: después no se los
+retoma (la revisión y las correcciones las hacen agentes nuevos).
 
 Despachá los dos en el mismo mensaje. Cada uno explora por su cuenta lo que necesita.
 
 ```
 Agent(subagent_type: "general-purpose", model: "sonnet", description: "Agente de tests T#####",
-      prompt: "<reglas del oficio: tests>
-               Invocá la skill clarabella:planear-tests-ticket en modo orquestado, como
-               agente generativo de juicio-ticket, para T##### (proyecto {proyecto}, tipo
-               {tipo}, slug {slug}). Única fuente: spec.md. No leas plan.md. Escribí tests.md
-               y juicio/bitacora-tests.md. Devolvé ARTEFACTO/DUDAS/SUGERENCIAS/ESTADO.")
+      prompt: "Invocá la skill clarabella:planear-tests-ticket en modo orquestado, como
+               agente generativo, para T##### (proyecto {proyecto}, tipo {tipo}, slug
+               {slug}). Única fuente: spec.md. No leas plan.md. Escribí tests.md (columna
+               Criterio con los CA# de spec.md). Devolvé ARTEFACTO/DUDAS/SUGERENCIAS/ESTADO.")
 
 Agent(subagent_type: "general-purpose", model: "opus", description: "Agente del plan T#####",
-      prompt: "<reglas del oficio: plan>
-               Invocá la skill clarabella:planear-ticket en modo orquestado, como agente
-               generativo de juicio-ticket, para T##### (proyecto {proyecto}, tipo {tipo},
-               slug {slug}). Fuente: spec.md. Worktrees en .worktrees/T#####-{slug}/. No leas
-               tests.md. Escribí plan.md y juicio/bitacora-plan.md. Devolvé
+      prompt: "Invocá la skill clarabella:planear-ticket en modo orquestado, como agente
+               generativo, para T##### (proyecto {proyecto}, tipo {tipo}, slug {slug}).
+               Fuente: spec.md. Worktrees en .worktrees/T#####-{slug}/. No leas tests.md.
+               Escribí plan.md (línea Cubre: en cada Parte). Devolvé
                ARTEFACTO/DUDAS/SUGERENCIAS/ESTADO.")
 ```
 
 **Exploradores, solo con tres repos o más.** Con uno o dos, el agente del plan lee el
 código igual, y los exploradores son gasto doble. Con tres o más, despachá primero un
 `Explore` por repo (`model: "haiku"`), en paralelo, con el objetivo del ticket (no una
-hipótesis de solución); guardá cada mapa en `juicio/exploracion-<ms>.md` y pasáselos al
+hipótesis de solución); guardá cada mapa en `revision/exploracion-<ms>.md` y pasáselos al
 agente del plan en su prompt.
 
 **Las DUDAS** de los agentes: primero filtrás vos lo que ya está contestado en la
@@ -130,30 +131,25 @@ en paralelo, que clasifica cada duda:
 
 Vos no respondés dudas: ni las de los agentes ni las que el Baqueano manda al usuario.
 
-La fase 1 termina cuando los dos entregaron su artefacto y su bitácora.
+La fase 1 termina cuando los dos entregaron su artefacto.
 
-## Fase 2 — El juicio
+## Fase 2 — Revisión
 
-Invocá `juicio-ticket` y seguí su procedimiento. Lo que te toca como orquestador:
+Invocá `revisar-ticket` en modo plan-tests y seguí su procedimiento:
 
-1. Despachar al Juez (ronda 1) y guardar su id.
-2. Retomar a los dos agentes para su defensa, en paralelo (ronda 2), cada uno con su
-   acusación y nada más.
-3. Retomar al Juez para la orden de peritaje (ronda 3).
-4. Despachar los peritos en paralelo (ronda 4) y rutear sus interrogatorios al agente
-   correspondiente, textuales. **No leas los peritajes.**
-5. Retomar al Juez para la sentencia (ronda 5).
-6. Corrección (ronda 6): retomar a cada agente con observaciones sostenidas para que
-   corrija **solo esas**, y al Juez para que verifique **solo los cambios**. Si una falta es
-   del Baqueano, primero corrige él la respuesta y después el agente actualiza lo que
-   dependía de ella.
-7. Llevarle al usuario la sentencia, copiando las posiciones textuales de
-   `juicio/sentencia.md`, incluidas las correcciones que fallaron dos veces. Si el ticket se
-   frena ahí, igual despachá al `cronista`: la crónica cuenta hasta dónde se llegó y por
-   qué.
+1. `trazabilidad.py` → `revision/trazabilidad.txt`. Los errores de formato y las líneas
+   `Cubre:` faltantes los arreglás vos; un criterio sin Parte o sin caso es hallazgo
+   bloqueante.
+2. Un revisor sonnet nuevo, una pasada → `revision/revision-plan-tests.md`.
+3. Si hay hallazgos: un sonnet nuevo corrige `plan.md` y otro `tests.md` (en paralelo),
+   cada uno con sus hallazgos y nada más. Los triviales los corregís vos. **No retomes a los
+   agentes generativos.**
+4. `trazabilidad.py` otra vez.
+5. Le presentás al usuario los hallazgos (copiados, sin resumir), qué se corrigió y los
+   DESACUERDOS, uno por línea. Lo que decida va a `spec.md` § Decisiones de contrato y, si
+   cambia un artefacto, lo aplica un sonnet nuevo.
 
-La fase 2 termina cuando el usuario aprueba la sentencia y la versión final de `plan.md` y
-`tests.md`.
+La fase 2 termina cuando el usuario aprueba `plan.md` y `tests.md`.
 
 ## Fase 3 — La implementación
 
@@ -176,7 +172,7 @@ usuario antes de implementar.
 ### 3.2 Implementar
 **En el worktree** (`.worktrees/T#####-{slug}/<ms>`), nunca en `microservicios/<ms>`. El
 objetivo es pasar a GREEN los casos que fallaron en RED, siguiendo el plan aprobado. Quien
-implementa anota en `juicio/implementacion/bitacora-<ms>.md` lo que no sale literal del
+implementa anota en `revision/notas-<ms>.md` lo que no sale literal del
 plan (ver `implementar-ticket`).
 
 Dos modos:
@@ -194,12 +190,12 @@ Agent(subagent_type: "general-purpose", model: "sonnet", description: "Implement
                por repo, para T##### (proyecto {proyecto}, tipo {tipo}, slug {slug}). Tu repo:
                <ms>, worktree .worktrees/T#####-{slug}/<ms>. Implementá solo la Parte <N>
                del plan. Contrato: spec.md § Decisiones de contrato. Reiniciá solo tu
-               contenedor T#####-<ms>. Escribí juicio/implementacion/bitacora-<ms>.md.
+               contenedor T#####-<ms>. Anotá los desvíos del plan en revision/notas-<ms>.md.
                Devolvé el contrato de la skill.")
 ```
 
-**Guardá el id de cada implementador:** en el juicio de la implementación se los retoma
-para que se defiendan, y para corregir lo que el Juez sostenga. Sus DUDAS van al usuario.
+**Guardá el id de cada implementador:** se los retoma para corregir los bugs de GREEN y los
+hallazgos de la revisión. Sus DUDAS van al usuario.
 
 **Por repo, no por módulo:** dos agentes en el mismo worktree se pisan en los archivos de
 registro (rutas, DI, módulos) y en los reinicios del contenedor.
@@ -231,30 +227,29 @@ No le expliques qué implementaste. Con el reporte:
 - `bug-implementacion` → corrige quien implementó ese repo (vos o su subagente, con
   `SendMessage`) y despachás **otro** subagente de GREEN.
 - `hueco-del-plan` → decide el usuario si se amplía el plan o el criterio queda fuera.
-- `test-mal-documentado` → decide el usuario. Después de un juicio es raro: anotalo para
-  el resumen, porque el juicio no lo detectó.
+- `test-mal-documentado` → decide el usuario. Anotalo: la revisión no lo detectó. Lo
+  corrige un sonnet nuevo y se repite el RED de ese caso.
 - `ambiguedad-negocio` → DUDA para el usuario.
 
 Si no estás de acuerdo con una clasificación, presentá las dos lecturas al usuario. Más de
 2-3 vueltas con el mismo caso → frená y escalá.
 
-### 3.4 Juicio de la implementación
-Con GREEN completo, la implementación va a juicio (`juicio-ticket` § Juicio de la
-implementación): el Juez revisa el diff de cada repo contra el plan aprobado, las reglas
-críticas del workspace y las convenciones, que es lo que GREEN no ve. Los implementadores
-se defienden, los peritos verifican para el Juez y el Juez sentencia. Lo sostenido lo
-corrige el implementador y corre un GREEN nuevo. Si implementaste vos, al presentar la
-sentencia copiá las posiciones textuales.
+### 3.4 Revisión de la implementación
+Con GREEN completo, `revisar-ticket` en modo implementación, un revisor por repo en
+paralelo: `reglas.py` sobre el snapshot del worktree (incluye archivos nuevos) y un revisor
+sonnet con el diff, el plan, las alertas y las notas. Los bloqueantes los corrige quien
+implementó ese repo; si cambió código, otro GREEN y otra vez `reglas.py`. No hay segunda
+revisión.
 
 ### 3.5 Exponer los cambios
-El usuario valida el diff en `mostrar-diff` junto con la sentencia de la implementación.
+El usuario valida el diff en `mostrar-diff` junto con las revisiones de la implementación.
 La fase 3 termina con su OK.
 
 ## Fase 4 — La entrega
 
 | Paso | Skill | Nota |
 |------|-------|------|
-| 4.1 Crónica | `cronista` (subagente nuevo) | Escribe `cronica.md` y los `borradores/`. El usuario la lee y la valida; con su OK, agregás `borradores/decisiones-nuevas.md` al final de `docs/{proyecto}/decisiones.md` |
+| 4.1 Crónica | `cronista` (subagente nuevo) | Antes, armá los hechos: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hechos.py {ticket} --worktree .worktrees/T#####-{slug}/<ms> … > {ticket}/revision/hechos.md`. Escribe `cronica.md` y los `borradores/`. El usuario la lee y la valida; con su OK, agregás `borradores/decisiones-nuevas.md` al final de `docs/{proyecto}/decisiones.md` |
 | 4.2 Review | `enviar-review` | Con los `borradores/arc-diff-<ms>.md` como base del mensaje, y solo con la aprobación explícita del usuario en el chat |
 | 4.3 Bajar el entorno | `bajar-entorno` | Cuando el usuario dice que cerramos. Worktree y branch quedan hasta que la review aterrice |
 
@@ -269,15 +264,16 @@ pueden preguntar: devuelven DUDAS. Vos se las llevás al usuario sin responderla
 - **Confundir esto con `pipeline-desarrollo`** → esa es la corrida con dashboard. Acá el
   usuario decide en el chat.
 - **Escribir el plan en el hilo principal** → el plan lo escribe un agente generativo; el
-  orquestador no genera ni defiende.
+  orquestador no genera.
 - **Pasarle a un agente generativo el artefacto del otro, o tu análisis** → se rompe la
   independencia. El único canal entre ellos es `## Decisiones de contrato` en `spec.md`.
 - **Responder vos las DUDAS de un agente** → van al usuario.
-- **Empezar el juicio con un solo agente presentado** → el juicio arranca con los dos.
-- **Leer, resumir o mencionar un peritaje** → son del Juez.
-- **Resumir la sentencia o tomar partido** → al usuario se le copian las posiciones
-  textuales.
-- **Rehacer un artefacto entero por lo que marcó el Juez** → se corrige solo lo marcado.
+- **Retomar a un agente generativo para corregir** → corrige un sonnet nuevo con el
+  artefacto y los hallazgos.
+- **Pedirle al revisor que verifique cobertura o reglas a mano** → eso lo hacen
+  `trazabilidad.py` y `reglas.py`.
+- **Resumir los hallazgos o tomar partido** → al usuario se le copian textuales.
+- **Rehacer un artefacto entero por un hallazgo** → se corrige solo lo marcado.
 - **Despachar exploradores en un ticket de uno o dos repos** → gasto doble: el agente del
   plan lee el código igual.
 - **Esperar a que el entorno Docker esté arriba para empezar la fase 1** → la etapa B va en
@@ -286,8 +282,10 @@ pueden preguntar: devuelven DUDAS. Vos se las llevás al usuario sin responderla
 - **Implementar en paralelo por módulo dentro del mismo repo** → se pisan; el paralelo es
   por repo.
 - **Paralelizar sin contrato fijado** → cada implementador adivina lo que hace el otro.
-- **Saltarse el juicio de la implementación porque GREEN pasó** → GREEN no ve estado en
+- **Saltarse la revisión de la implementación porque GREEN pasó** → GREEN no ve estado en
   propiedades de clase, tablas ajenas ni desvíos del plan.
+- **Revisar con `git diff master`** → no ve los archivos nuevos; `revisar-ticket` usa el
+  snapshot.
 - **Correr el GREEN en el hilo principal** → quien escribió el código no es quien mejor lo
   juzga.
 - **Reescribir un test para que pase con lo implementado** → solo si el usuario lo decide.
