@@ -27,8 +27,8 @@ ninguna fuente resuelve, no elige: arma el caso para el usuario.
 | 7 | El código (canónico en master o el worktree que indique el orquestador) | Cómo se comporta algo hoy |
 | 8 | La base de datos, solo con `leer-db` (solo lectura) | Esquemas y datos reales. Nunca escribe |
 
-No lee: los artefactos ni las bitácoras de los agentes generativos (`plan.md`, `tests.md`,
-`juicio/bitacora-*.md`), ni `juicio/peritajes/`. Responde desde las fuentes, no desde lo que
+No lee: los artefactos de los agentes generativos (`plan.md`, `tests.md`) ni `revision/`.
+Responde desde las fuentes, no desde lo que
 hizo otro agente.
 
 ## Cómo clasifica cada duda
@@ -79,8 +79,8 @@ del Baqueano, y lo corrige él. El orquestador le incluye estas reglas en el pro
 
 > Sos el Baqueano de {plan|tests} de T#####. Un agente generativo va a construir sobre lo
 > que digas, y si se equivoca por una respuesta tuya, la falta es tuya y la corregís vos.
-> 1. **No inventes ni tergiverses una fuente.** Un perito puede abrir cada cita y revisar tu
->    "dónde busqué", y te puede interrogar.
+> 1. **No inventes ni tergiverses una fuente.** El usuario y el Cronista pueden abrir cada
+>    cita y seguir tu "dónde busqué": tiene que existir y decir eso.
 > 2. **No respondas lo que no te toca.** Cerrar como `RESPONDIDA` o `PRECEDENTE` algo que
 >    era una decisión del usuario es decidir por él.
 > 3. **Mandar al usuario lo que de verdad es suyo nunca es falta.** Pero mandarle lo que
@@ -90,19 +90,20 @@ del Baqueano, y lo corrige él. El orquestador le incluye estas reglas en el pro
 
 | Falta | Cuándo |
 |-------|--------|
-| `fabricacion` | Un perito probó una cita inexistente, una fuente que no dice lo que el Baqueano afirma, o un "dónde busqué" falso |
 | `respuesta-erronea` | Una respuesta `RESPONDIDA` o `PRECEDENTE` resultó falsa: una fuente de más autoridad, que estaba en su lista de dónde buscar, decía otra cosa, o leyó mal la que citó |
 | `decidio-por-el-usuario` | Clasificó como `RESPONDIDA`, `PRECEDENTE` o `DECISIÓN MENOR` algo que era una decisión del usuario (la spec lo dejaba abierto, el "precedente" no era una decisión registrada del usuario, o la "menor" cambiaba contrato, comportamiento o alcance), o tomó como `PROVISORIA` algo de terreno sensible, o una provisoria que no era la opción más conservadora sin decir por qué |
 
-Solo cuenta si un agente generativo **usó** esa respuesta y el error llegó al juicio. Una
+Solo cuenta si un agente generativo **usó** esa respuesta y el error apareció en la
+revisión, en el RED o en el GREEN. Una
 `PROVISORIA` que el usuario veta al final no es falta: para eso es provisoria. Citar bien una
 fuente desactualizada tampoco: es "Documentación a revisar".
 
-**Con una falta, el Baqueano corrige** (ver `juicio-ticket` § El Baqueano en el juicio): se
-lo retoma con `SendMessage`, corrige esa respuesta y revisa las otras suyas que el agente
-citó en decisiones bloqueantes. Al agente se le pasan solo las respuestas que cambiaron.
-Si ya no está disponible, se despacha uno nuevo con su archivo de consultas y la acusación,
-para que corrija desde ahí.
+**Con una falta, el Baqueano corrige:** se lo retoma con `SendMessage`, corrige esa
+respuesta y revisa las otras suyas que se usaron en decisiones bloqueantes. Las partes del
+plan o de los tests que dependían de las respuestas que cambiaron las actualiza un sonnet
+nuevo (ver `revisar-ticket` § La corrección), no el agente generativo. Si el Baqueano ya no
+está disponible, se despacha uno nuevo con su archivo de consultas y el hallazgo, para que
+corrija desde ahí.
 
 ## Independencia
 
@@ -117,7 +118,7 @@ les llega a los dos por ahí.
 
 ## Archivo de consultas
 
-`juicio/consultas-{plan|tests}.md`, una entrada por duda:
+`revision/consultas-{plan|tests}.md`, una entrada por duda:
 
 ```markdown
 ### C3 · duda D2 del agente de {rol} · RESPONDIDA | PRECEDENTE | AL USUARIO
@@ -128,9 +129,8 @@ les llega a los dos por ahí.
 - **Para el usuario:** <solo si AL USUARIO: qué dice cada fuente, opciones y qué cambia con cada una>
 ```
 
-El Juez lee estos archivos en el juicio: una respuesta del Baqueano es evidencia, y un
-agente generativo puede citarla ("consulta C3"). Un perito puede verificar sus citas igual
-que las de cualquier agente.
+El revisor y el Cronista leen estos archivos: un agente generativo puede citar una
+respuesta ("consulta C3"), y esa cita lleva a la fuente.
 
 ## Procedimiento (lo que hace el orquestador)
 
@@ -147,7 +147,7 @@ que las de cualquier agente.
          prompt: "<reglas del oficio del Baqueano>
                   Invocá la skill clarabella:baqueano para T##### (proyecto {proyecto}, tipo
                   {tipo}, slug {slug}). Dudas del agente de {rol}: <textual de sus DUDAS>.
-                  Escribí juicio/consultas-{rol}.md y devolvé el contrato.")
+                  Escribí revision/consultas-{rol}.md y devolvé el contrato.")
    ```
 2. Con su contrato:
    - `RESPONDIDA` → se la pasás al agente con `SendMessage`, con la cita, para que siga.
@@ -159,12 +159,13 @@ que las de cualquier agente.
      los dos agentes.
 3. Si al seguir trabajando un agente devuelve DUDAS nuevas, se retoma al mismo Baqueano
    con `SendMessage` (ya conoce el terreno de ese agente).
-4. **Guardá el id de cada Baqueano:** en el juicio, un perito lo puede interrogar.
+4. **Guardá el id de cada Baqueano:** si una respuesta resulta errónea, se lo retoma para
+   corregirla.
 
 ## Contrato de salida
 
 ```
-ARTEFACTO: juicio/consultas-{rol}.md
+ARTEFACTO: revision/consultas-{rol}.md
 RESPONDIDAS: <C1, C4 …>
 MENORES: (solo en el ciclo)
   - [C5] <qué decidió y qué convención siguió>
@@ -184,11 +185,11 @@ ESTADO: completo
 - **Tratar un precedente como respuesta firme cuando la spec lo reabre** → si la spec lo
   lista como abierto y el precedente lo cierra, es un conflicto: `AL USUARIO`, con las dos
   citas.
-- **Responder sin decir dónde buscó** → el perito y el usuario necesitan poder verificarlo.
+- **Responder sin decir dónde buscó** → el usuario necesita poder verificarlo.
 - **Leer el plan o los tests de un agente para contestarle al otro** → filtra el trabajo
   entre agentes.
 - **Contestar las dudas de los dos agentes en un mismo archivo** → uno por agente.
 - **Confiar en los `docs/` de un repo sin mirar el código** → pueden estar viejos.
 - **Llamar precedente a lo que otro ticket hizo por su cuenta** → precedente es solo una
   decisión registrada del usuario; lo demás es práctica y va en el caso `AL USUARIO`.
-- **Escribir un "dónde busqué" que no recorriste** → es lo primero que verifica el perito.
+- **Escribir un "dónde busqué" que no recorriste** → el usuario lo va a notar al seguir la cita.
