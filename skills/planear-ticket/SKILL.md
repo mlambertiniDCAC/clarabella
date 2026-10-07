@@ -40,6 +40,29 @@ primero con `preparar-repo` (switch a master + pull). En el pipeline eso ya lo h
 la Fase 1 del motor. Consultá en este orden: `dcac-context/` → `CLAUDE.md` del repo →
 código como fallback (regla del workspace).
 
+**Exploración en paralelo por repo.** Si el ticket toca más de un repo (p. ej. un ms +
+`apigateway`), o uno solo pero con un dominio amplio, despachá **un subagente `Explore` por
+repo, todos en el mismo mensaje** para que corran a la vez:
+
+```
+Agent(subagent_type: "Explore", description: "Explorar <ms> para T#####",
+      prompt: "Objetivo del ticket: <1-3 líneas de la spec>. Repo: microservicios/<ms>
+               (en master actualizado). Consultá en orden dcac-context/ → CLAUDE.md del repo
+               → graphify-out/ si existe → código. Devolvé: archivos candidatos a tocar
+               (ruta:línea), patrones a espejar, tablas propias involucradas, endpoints
+               relacionados y dudas. Breadth: medium.")
+```
+
+Pasales el objetivo del ticket, **no una hipótesis de solución**: si les decís "hay que
+agregar X en el enum Y", buscan eso y confirman tu idea en vez de mostrarte qué hay. Para
+un ticket chico en un solo repo no hace falta despachar nada: explorá directo.
+
+Si corrés como subagente (modo orquestado) no podés despachar exploradores: el orquestador
+los corre antes y te pasa sus mapas en `juicio/exploracion-<ms>.md`.
+
+Lo que devuelven es un mapa, no el análisis: orientan qué leer, pero la lectura de los
+archivos a modificar la hacés vos con Read (ver abajo).
+
 Si el repo ya tiene un grafo de conocimiento (`graphify-out/graph.json`), usá
 `consultar-grafo` como primer paso del fallback de código: te orienta más rápido
 sobre qué archivos/clases mirar antes de leerlos con Read. No reemplaza la lectura real del
@@ -59,6 +82,14 @@ buenas prácticas, o hay una duda/ambigüedad, **avisá y consultá** — no asu
 plan y llamá `ExitPlanMode` para que el usuario lo apruebe.
 
 **No guardes el archivo todavía.** El plan se documenta recién tras la aprobación.
+
+**Tamaño del plan.** Todo lo que viene después (Juez, peritos, implementadores, Cronista)
+lee el plan entero, así que cada línea de más se paga varias veces:
+- Snippets **solo de lo que cambia**, con 2-3 líneas de contexto. Nunca un archivo entero.
+- Un archivo sin cambios no aparece. Un cambio mecánico repetido (por ejemplo, ajustar el
+  mismo assert en varios tests) se describe una vez y se listan los lugares.
+- Objetivo: que el plan entre en unas 300 líneas. Si no entra, es señal de que el ticket
+  es grande y conviene decirlo.
 
 ### Fase 3 — Documentar (solo tras aprobación)
 Con el plan aprobado, escribí el archivo en la ruta de la convención de arriba. Estructura:
@@ -96,6 +127,13 @@ el archivo del plan y quedate esperando: la implementación es una decisión que
 explícitamente y por separado (ej. "dale, implementá", "arrancá con la Parte 1"). Hasta que no lo
 diga, solo documentaste.
 
+En `resolver-ticket` los tests los escribe otro agente generativo, en paralelo, desde la
+spec. **No leas `tests.md`** para armar ni para ajustar el plan: plan y tests se encuentran
+en el juicio (`juicio-ticket`, donde defendés el plan frente a la documentación) y al
+ejecutarse (RED antes de implementar, GREEN después). Lo que necesiten en común, como una ruta o un
+campo que el ticket no fijaba, lo decide el usuario y queda en `spec.md`, en
+`## Decisiones de contrato`: el plan tiene que respetarlo.
+
 ## Skills especiales por tipo de cambio
 
 Ciertos cambios recurrentes tienen su propia skill con reglas específicas. Cuando el
@@ -108,7 +146,7 @@ ticket lo pide, el plan debe **incorporar esas reglas** en la parte correspondie
 No inventes migraciones que el ticket no pide. Si el ticket necesita una y no dice en qué
 esquema, es una **DUDA**.
 
-## Modo orquestado (invocada por el motor `pipeline-desarrollo`)
+## Modo orquestado (subagente de `resolver-ticket` o del motor `pipeline-desarrollo`)
 
 Esta skill tiene **dos modos**. El default es **standalone** (todo lo de arriba: gate
 humano con `ExitPlanMode`, documentar recién tras la aprobación). Pero cuando la invoca
@@ -152,6 +190,27 @@ que está colgado:
 ```bash
 echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"2\",\"actor\":\"subagente\",\"tipo\":\"lectura\",\"texto\":\"leyendo <archivo>\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/actividad.jsonl
 ```
+
+## Como agente generativo de `juicio-ticket`
+
+Si el prompt dice que sos el agente generativo de plan de un juicio, además de lo de
+arriba:
+
+1. **Tus reglas** vienen en el prompt (ver `juicio-ticket` § El oficio de un agente
+   generativo): tu trabajo va a ser juzgado, y lo que el Juez sostenga lo vas a corregir vos.
+2. **Escribí la bitácora mientras trabajás** (`juicio/bitacora-plan.md`, formato en
+   `juicio-ticket`): cada fuente que consultás, cada decisión con su fuente, cada supuesto.
+   Un perito la va a contrastar contra las fuentes reales.
+   Si una decisión sale de una respuesta del Baqueano, citá la consulta (`C3`) en la
+   bitácora en ese momento: si después resulta que la respuesta era mala, ese rastro
+   muestra que el error no fue tuyo.
+3. **Cerrá la bitácora con la presentación ante el Juez:** cada criterio de la spec → la
+   parte del plan que lo cubre.
+4. Cuando te retomen para la **defensa** o la **corrección**, invocá `juicio-ticket` (rol
+   agente generativo, ronda 2 o 6). Si corregís, cambiá **solo** lo que el Juez marcó. Si te
+   interroga un perito, respondé con la verdad: tus respuestas solo las ve
+   el Juez.
+5. Nunca leas `tests.md`, la bitácora ni la acusación del otro agente, ni `juicio/peritajes/`.
 
 ## Errores comunes
 

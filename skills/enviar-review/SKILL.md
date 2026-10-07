@@ -15,10 +15,16 @@ del usuario en el chat, no un archivo de estado.
 ## Gate — aprobación explícita del usuario en el chat
 
 **No corras esta skill por tu cuenta.** Necesitás que el usuario, en el mensaje, haya aprobado
-el envío en un turno anterior o en el mismo (ej. tras ver el resumen de `resumir-ticket`
+el envío en un turno anterior o en el mismo (ej. tras ver la crónica del `cronista`
 o el diff de `mostrar-diff`) — no infieras la aprobación de que "el código está
 listo". Si no hubo un "dale, mandalo" / "aprobado, enviá" explícito, preguntá antes de
 commitear.
+
+## Mensaje del commit
+
+Si el ticket tiene `borradores/arc-diff-<ms>.md` (los escribe el `cronista`), usalo como
+base del mensaje de cada repo. Antes de enviar, el usuario completa `Reviewers` y valida el
+texto.
 
 ## Regla de oro ante errores
 

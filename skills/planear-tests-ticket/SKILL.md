@@ -1,13 +1,25 @@
 ---
 name: planear-tests-ticket
-description: Usar cuando el usuario quiere documentar cómo testear un ticket ya planificado sobre el workspace dcac-ia-context — existe (o se está armando) un plan de desarrollo y hay que definir el plan de testeo de comportamiento E2E. Triggers — "documentá los tests de T#####", "armá el plan de testeo", "cómo testeamos T#####", "definí cómo probar esto". NO ejecuta tests, solo los documenta.
+description: Usar cuando el usuario quiere documentar cómo testear un ticket del workspace dcac-ia-context — definir el plan de testeo de comportamiento E2E a partir de la spec del ticket, independiente del plan de desarrollo, para correrlo en RED antes de implementar y en GREEN después. Triggers — "documentá los tests de T#####", "armá el plan de testeo", "cómo testeamos T#####", "definí cómo probar esto". NO ejecuta tests, solo los documenta.
 ---
 
 # Documentar tests
 
-Toma el **plan de desarrollo** de un ticket y produce el **plan de testeo de comportamiento**:
-qué probar, los curls, cómo verificar éxito contra la DB, cómo dejar la DB como estaba, y qué
-queda fuera de alcance. Ordena el trabajo en 3 fases: **entender → diseñar el test → documentar**.
+Toma la **spec del ticket** (descripción + criterios de aceptación) y produce el **plan de
+testeo de comportamiento**: qué probar, los curls, cómo verificar éxito contra la DB, cómo
+dejar la DB como estaba, y qué queda fuera de alcance. Ordena el trabajo en 3 fases:
+**entender la spec → diseñar el test → documentar**.
+
+**Los tests salen de la spec y nunca del plan de desarrollo.** Testean la solución del
+ticket, no lo que el plan decidió implementar. Plan y tests se hacen por separado (pueden
+correr en paralelo) y no se cruzan en ningún momento: el punto de encuentro es la
+ejecución, al estilo RED/GREEN.
+
+- **RED:** `testear-ticket` corre los tests antes de implementar. Los casos del
+  comportamiento nuevo tienen que fallar; si alguno pasa, el test no discrimina o el
+  comportamiento ya existía.
+- **GREEN:** después de implementar, todos tienen que pasar. Si el plan se olvidó un
+  criterio, ese test sigue en rojo: así aparece el hueco, sin revisar plan contra tests.
 
 **La skill termina al documentar: NO ejecuta los tests.** La ejecución la declara el usuario
 explícitamente, en un paso aparte. Documentar el plan de test no es luz verde para correrlos.
@@ -24,7 +36,8 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 
 | Dato | Para qué | Si falta |
 |------|----------|----------|
-| Plan de desarrollo | Base de qué se testea | Buscá `docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md`; si no está, pedilo |
+| Spec del ticket | Única base de qué se testea | Buscá `docs/{proyecto}/{tipo}/T<ticket>-<slug>/spec.md`; si no está, pedí el texto del ticket y guardalo ahí sin editarlo. **No leas `plan.md` aunque exista** |
+| Contrato de la interfaz | Rutas, campos y códigos para escribir los curls | Sale de la spec. Si la spec no lo fija (ruta nueva, campo nuevo, código de error), **preguntá al usuario**: él lo fija y vale igual para el plan |
 | Ticket `T#####` | Nombre del archivo | Preguntá el número |
 | Proyecto destino | Carpeta dentro de `docs/` | Listá las carpetas de `docs/` y preguntá |
 | Acceso a la DB de pruebas | Verificaciones del doc | Confirmá contenedor/credenciales (ver Acceso a la DB); si no los tenés, **pedíselos al usuario** |
@@ -104,15 +117,43 @@ Además del código HTTP esperado, **siempre** una verificación contra la DB:
 
 ## Workflow
 
-### Fase 1 — Entender
-Leé el plan de desarrollo del ticket. Extraé: endpoints (verbo + ruta ms y ruta gateway `/v1/...`),
-reglas de negocio, tablas tocadas (cruzar con `database-ownership.md`), auth requerida, y los
-servicios que recorre el flujo E2E. Consultá `dcac-context/` → `CLAUDE.md` del repo → código.
+### Fase 1 — Entender la spec
+Leé `spec.md`. Extraé: criterios de aceptación, reglas de negocio, actores y permisos,
+casos borde que el ticket menciona o implica, y qué estado observable tiene que cambiar
+(qué entidad se crea, modifica o da de baja).
+
+Para traducir eso a verificaciones concretas podés consultar `dcac-context/` (reglas,
+glosario, `database-ownership.md`, esquemas) y la DB de pruebas: el estado de la DB es
+comportamiento observable. Si el ticket modifica algo que ya existe, podés leer el código
+actual **solo para saber cómo se comporta hoy**, nunca para deducir cómo se va a
+implementar el cambio. **No leas `plan.md`** en esta fase aunque exista.
+
+**Tamaño.** Lo que se escribe acá lo leen el Juez, los peritos, el RED, cada GREEN y el
+Cronista, así que cada caso de más se paga muchas veces:
+- **Un escenario por criterio de aceptación**, más los bordes que definió la escritura o la
+  spec. No sumes casos "por las dudas": cada caso tiene que poder señalar el criterio o la
+  decisión que lo justifica.
+- Los curls usan variables para host, token y headers, definidas una vez arriba, no
+  repetidas en cada caso.
+- Objetivo: unos 15 casos para un ticket de uno o dos repos. Si hacen falta muchos más, es
+  señal de que el ticket es grande y conviene decirlo.
 
 ### Fase 2 — Diseñar el plan de test (en plan mode)
-Armá: comportamiento esperado (reglas), tabla de casos (ID, precondición, request, esperado,
-código), **lista de curls** (ms directo + por gateway), verificaciones por verbo (tabla de arriba),
-preparación de datos, teardown (DB de pruebas), y fuera de alcance.
+Armá: comportamiento esperado (reglas), escenarios Gherkin, tabla de casos (ID,
+precondición, request, esperado, código, esperado en RED), **lista de curls** (ms directo +
+por gateway), verificaciones por verbo (tabla de arriba), preparación de datos, teardown
+(DB de pruebas), y fuera de alcance. Cada criterio de aceptación de la spec tiene que tener
+al menos un escenario; si uno no se puede testear, va a fuera de alcance con el motivo.
+
+**Esperado en RED**, por caso:
+- `falla` → el caso ejercita comportamiento nuevo del ticket.
+- `pasa` → el caso es de regresión: comportamiento que ya existe y no se tiene que romper.
+
+**Los curls y las queries usan el contrato de la spec.** Lo que la spec no fija (la ruta de
+un endpoint nuevo, el nombre de un campo, el código de un error) no lo deducís ni lo
+inventás: preguntale al usuario. Lo que él fije es el contrato que también tiene que
+cumplir el plan.
+
 Para los **candidatos a fuera de alcance** (inputs de usuario o ideas tuyas), **consultá al usuario**
 si entran o no. Presentá el plan y llamá `ExitPlanMode`.
 
@@ -125,11 +166,15 @@ Escribí el archivo en la ruta de la convención, con esta estructura:
 # Cómo testear — <Título> (T#####)
 
 > **Ticket:** T#####
-> **Implementación:** <qué se entregó: migración, módulo, endpoints>.
-> Este doc define cómo verificar el **comportamiento** de la entrega.
+> **Fuente:** spec.md (nunca plan.md)
+> Este doc define cómo verificar el **comportamiento** pedido por el ticket.
+
+## Contrato
+Rutas (ms interno y gateway `/v1/...`), campos y códigos que usan los curls, y de dónde
+sale cada uno (spec o decisión del usuario).
 
 ## Comportamiento esperado
-Reglas que deben cumplirse + rutas (ms interno y gateway `/v1/...`).
+Reglas que deben cumplirse, tal como las pide la spec.
 
 ## Escenarios BDD (Gherkin)
 Un `Feature` por comportamiento, con escenarios `Given / When / Then` legibles por
@@ -140,7 +185,7 @@ negocio. Cada escenario mapea 1:1 a un caso de la tabla de prueba y a un curl. E
 
       Scenario: <caso feliz>
         Given <precondición de datos / estado en la DB de pruebas>
-        When <request: verbo + ruta (ms directo o gateway /v1/...)>
+        When <request: verbo + ruta del contrato (ms directo o gateway /v1/...)>
         Then <código HTTP esperado>
         And <fila esperada en la tabla destino / campo derivado>
 
@@ -158,10 +203,10 @@ curls + la verificación DB son la prueba real.
 Cada request a probar (ms directo con headers internos + E2E por gateway con auth real).
 
 ## Cómo verificar éxito
-Por cada endpoint, la query de DB que confirma el resultado (según verbo).
+Por cada caso, la query de DB que confirma el resultado (según verbo).
 
 ## Tabla de casos de prueba
-| ID | Precondición | Acción / request | Esperado | Código |
+| ID | Precondición | Acción / request | Esperado | Código | Esperado en RED |
 
 ## Preparación de datos de prueba
 Cómo dejar la DB lista para cada caso (precondiciones).
@@ -186,24 +231,30 @@ No usar sqlite/hsql: los microservicios están casados con MariaDB/MongoDB reale
 idéntica a la de desarrollo: se testea contra `db-test` (:3307) y para volver al estado original se
 recrea (`down -v && up`), sin tocar la base de desarrollo.
 
-## Modo orquestado (invocada por el motor `pipeline-desarrollo`)
+## Modo orquestado (subagente de `resolver-ticket` o del motor `pipeline-desarrollo`)
 
 Esta skill tiene **dos modos**. El default es **standalone** (gate humano con
-`ExitPlanMode`, documentar recién tras la aprobación). Cuando la invoca el motor
-`pipeline-desarrollo` como Fase 3, corre en **modo orquestado**.
+`ExitPlanMode`, documentar recién tras la aprobación). Cuando la despacha un orquestador
+como subagente (`resolver-ticket` en su fase 1, como agente generativo, o el motor en su Fase 3), corre en
+**modo orquestado**, normalmente en paralelo con `planear-ticket`.
 
 Sabés que estás en modo orquestado si el prompt que te invoca lo dice explícitamente
 (ej. "corré planear-tests-ticket en modo orquestado para T#####"). En ese caso:
 
-1. **NO llames `ExitPlanMode` ni esperes OK humano.** El gate humano lo maneja el motor.
-2. Hacé Fase 1 (entender el plan de desarrollo) y Fase 2 (diseñar el plan de test, con
-   la capa **Gherkin**) igual que siempre.
-3. **Guardá el doc directo** en la ruta de la convención
+1. **NO llames `ExitPlanMode` ni esperes OK humano.** El gate humano lo maneja quien te
+   despachó.
+2. Hacé Fase 1 (entender la spec) y Fase 2 (diseñar el plan de test, con los escenarios
+   **Gherkin** y el esperado en RED) igual que siempre.
+3. Tu única fuente es `spec.md` (más `dcac-context/` y la DB para las verificaciones). Si
+   el prompt trae análisis, hipótesis de solución o partes del plan, ignoralas y no leas
+   `plan.md`.
+4. **Guardá el doc directo** en la ruta de la convención
    (`docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md`), incluyendo la sección
    `## Escenarios BDD (Gherkin)`.
-4. **No decidas solo el fuera de alcance ni inventes credenciales/endpoints.** Cada uno
-   de esos es una **DUDA** (bloqueante). Toda mejora que veas es una **SUGERENCIA**.
-5. Terminá devolviendo al motor **este contrato exacto**:
+5. **No decidas solo el fuera de alcance ni inventes credenciales, endpoints ni partes del
+   contrato que la spec no fija.** Cada uno de esos es una **DUDA** (bloqueante). Un
+   criterio de la spec ambiguo también. Toda mejora que veas es una **SUGERENCIA**.
+6. Terminá devolviendo **este contrato exacto**:
 
 ```
 ARTEFACTO: <path del plan de test guardado>
@@ -221,6 +272,27 @@ ESTADO: completo | frenado-por-duda
 El resto de las reglas (tests de comportamiento, verificación contra DB de pruebas,
 teardown) aplican **igual** en modo orquestado.
 
+## Como agente generativo de `juicio-ticket`
+
+Si el prompt dice que sos el agente generativo de tests de un juicio, además de lo de
+arriba:
+
+1. **Tus reglas** vienen en el prompt (ver `juicio-ticket` § El oficio de un agente
+   generativo): tu trabajo va a ser juzgado, y lo que el Juez sostenga lo vas a corregir vos.
+2. **Escribí la bitácora mientras trabajás** (`juicio/bitacora-tests.md`, formato en
+   `juicio-ticket`): cada fuente que consultás, cada decisión con su fuente, cada supuesto.
+   Un perito la va a contrastar contra las fuentes reales.
+   Si una decisión sale de una respuesta del Baqueano, citá la consulta (`C3`) en la
+   bitácora en ese momento: si después resulta que la respuesta era mala, ese rastro
+   muestra que el error no fue tuyo.
+3. **Cerrá la bitácora con la presentación ante el Juez:** cada criterio de la spec → la
+   parte (caso de test) que lo cubre.
+4. Cuando te retomen para la **defensa** o la **corrección**, invocá `juicio-ticket` (rol
+   agente generativo, ronda 2 o 6). Si corregís, cambiá **solo** lo que el Juez marcó. Si te
+   interroga un perito, respondé con la verdad: tus respuestas solo las ve
+   el Juez.
+5. Nunca leas `plan.md`, la bitácora ni la acusación del otro agente, ni `juicio/peritajes/`.
+
 ## Errores comunes
 
 - **Ejecutar los tests apenas se documenta** → no. La skill termina al guardar el doc.
@@ -230,6 +302,14 @@ teardown) aplican **igual** en modo orquestado.
 - **Inventar credenciales de DB o un endpoint** → si falta acceso o scaffolding, preguntá al usuario.
 - **Decidir solo qué queda fuera de alcance** → los candidatos se consultan con el usuario.
 - **Guardar el doc antes de la aprobación** → el gate es `ExitPlanMode`; documentás después.
+- **Leer `plan.md`, antes o después de escribir los tests** → los tests heredan las
+  decisiones y los olvidos del plan. Plan y tests no se cruzan; se encuentran al ejecutar.
+- **Deducir la ruta o la columna que "seguro" va a crear el plan** → si la spec no fija
+  el contrato, lo fija el usuario.
+- **No marcar el esperado en RED** → sin eso, la corrida RED no puede distinguir un test
+  que no discrimina de uno de regresión.
+- **Reescribir un test para que pase con lo implementado** → un test que sale de la spec
+  solo cambia si el usuario lo decide.
 - **`docker compose down`/recrear un contenedor de DB ajeno al ticket para "arreglar" un
   error** → NUNCA. Ver "Infra compartida — reglas duras al ejecutar". Sin volumen nombrado
   confirmado, cualquier down/recreate puede borrar datos de todo el equipo.

@@ -28,10 +28,16 @@ sus gates y formatos, y se respetan tal cual.
 | Planear / documentar un ticket antes de codear | `clarabella:planear-ticket` |
 | Documentar cómo testear un ticket | `clarabella:planear-tests-ticket` |
 | Implementar un plan ya aprobado | `clarabella:implementar-ticket` |
+| Juzgar el plan y los tests (o la implementación) de un ticket, "que el juez revise", "llevalo a juicio" | `clarabella:juicio-ticket` |
+| Revisar si la spec de un ticket está completa antes de arrancar, "escriturá la spec" | `clarabella:escribano` |
+| Que el desarrollo se repita solo hasta dar con la implementación correcta, "corré T##### en ciclo" | `clarabella:ciclo-ticket` |
+| Probar / calibrar el juicio con un ticket ya cerrado, "backtest" | `clarabella:ensayar-juicio` |
+| Responder dudas de los agentes de un ticket desde las fuentes, "preguntale al baqueano" | `clarabella:baqueano` |
 | Correr los tests documentados | `clarabella:testear-ticket` |
 | Ver el diff de lo que cambió | `clarabella:mostrar-diff` |
-| Resumir / cerrar un ticket | `clarabella:resumir-ticket` |
+| Contar / reportar / resumir lo que pasó en un ticket, "que el cronista cuente", "cerrá T#####" | `clarabella:cronista` |
 | Mandar a review, `arc diff` | `clarabella:enviar-review` (solo con aprobación explícita del usuario) |
+| Bajar los contenedores del ticket, "apagá todo", que no consuma recursos al dope | `clarabella:bajar-entorno` |
 | Crear una migración de DB | `clarabella:crear-migracion` |
 | Consultar datos en una base (solo lectura) | `clarabella:leer-db` |
 | Entender cómo funciona un servicio que tiene grafo | `clarabella:consultar-grafo` |

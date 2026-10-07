@@ -24,7 +24,7 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 |------|----------|----------|
 | Plan de desarrollo | Qué código escribir | Buscá `docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md`; si no está, pedilo |
 | Ticket `T#####` + proyecto | Ubicar el doc y la branch | Preguntá |
-| Plan de test (opcional) | Contexto de qué se va a probar después | Buscá `tests.md` en la misma carpeta del plan; útil, no bloqueante |
+| Plan de test (opcional) | El objetivo: dejar en GREEN los casos que en RED fallaban | Buscá `tests.md` en la misma carpeta del plan; útil, no bloqueante |
 
 ## Reglas duras del workspace (no negociables)
 
@@ -59,12 +59,17 @@ snippet "Cambio" del plan. Espejá los patrones del código vecino (naming, estr
 manejo de errores). Si al implementar aparece algo que el plan no previó y que requiere una
 decisión de negocio/producto → **pará y reportalo como DUDA**, no lo resuelvas asumiendo.
 Si ves una mejora de buenas prácticas fuera del plan → **SUGERENCIA**, no la apliques sola.
+Si mirás `tests.md` y un caso pide algo que el plan no contempla → es un **hueco del
+plan**: reportalo como DUDA para el usuario, no lo implementes por tu cuenta ni toques el
+test.
 
 ### Fase 3 — Cerrar (handoff a la fase de testeo)
 No ejecutás el testeo documentado (eso es `testear-ticket`, Fase 5). Acá:
 - Confirmá que **todos los cambios del plan quedaron aplicados** (todas las Partes).
 - Sanity check mínimo: que el contenedor **levanta** y el código no rompe sintácticamente
-  (arranque del servicio en Docker). Sin correr los casos del plan de test.
+  (arranque del servicio en Docker). Sin correr los casos del plan de test. En
+  `resolver-ticket`, el contenedor lo levanta la etapa B de `aislar-ticket` en background:
+  si todavía no terminó, esperá su resultado en vez de levantarlo vos.
 - Dejá el trabajo en la branch `T#####` (sin commitear) listo para que la Fase 5 lo pruebe.
 
 Si en la Fase 5 un test vuelve clasificado como `bug-implementacion`, el motor te
@@ -75,6 +80,39 @@ re-despacha con el diagnóstico para corregir ese punto puntual, y se re-ejecuta
 Producí un reporte de implementación con: qué archivos se tocaron (ruta + resumen del
 cambio), en qué branch quedaron, y el resultado del sanity check de arranque.
 
+## Bitácora de implementación
+
+Mientras implementás, anotá en `juicio/implementacion/bitacora-<ms>.md` (uno por repo) todo
+lo que **no** sale literal del plan: decisiones que tuviste que tomar, patrones que
+espejaste (con ruta:línea del código vecino), desvíos y por qué. Lo que es copia fiel del
+plan no hace falta anotarlo. Después de GREEN, la implementación va a juicio
+(`juicio-ticket` § Juicio de la implementación) y un perito puede contrastar esta bitácora
+con el código.
+
+## Implementación en paralelo por repo
+
+Cuando el ticket toca dos o más repos con trabajo real, el orquestador puede despachar un
+implementador (subagente) por repo, todos a la vez. Si sos uno de ellos:
+
+- **Tu alcance es tu Parte del plan y tu worktree** (`.worktrees/T#####-{slug}/<ms>`).
+  No leas ni toques los worktrees de los otros repos.
+- **Lo que tu repo necesita del otro sale del contrato** (`spec.md` § Decisiones de
+  contrato y el plan aprobado). Codeá contra el contrato, no contra lo que suponés que hace
+  el otro implementador. Si el contrato no alcanza para tu Parte, es una **DUDA**.
+- **Solo reiniciás tu propio contenedor** `T#####-<ms>` para el sanity check. Nunca
+  levantes contenedores nuevos ni toques otros: la VM de Docker es chica y varios Hyperf
+  arrancando a la vez tumban la DB compartida.
+- Una migración (`nasgrate`) es un repo aparte: la escribe solo el implementador al que el
+  plan se la asigna.
+- Terminá con el contrato de modo orquestado de abajo, aclarando tu repo en `ARTEFACTO`.
+
+## En el ciclo
+
+Si te despacha `ciclo-ticket`, sos un agente generativo: el prompt trae las reglas del
+oficio. Tu bitácora es lo que el perito va a contrastar, y en el juicio de la
+implementación te defendés como cualquier agente. Lo que el Juez sostenga lo corregís vos,
+solo en lo marcado. Las faltas están en `ciclo-ticket` § El implementador.
+
 ## Skills especiales por tipo de cambio
 
 Si el plan incluye un cambio que tiene skill propia, seguí sus reglas al implementarlo:
@@ -83,9 +121,9 @@ Si el plan incluye un cambio que tiene skill propia, seguí sus reglas al implem
 |----------------|-------|-----------|
 | Migración de DB (nasgrate) | `crear-migracion` | Creás el archivo en `microservicios/nasgrate/data/migrations/` con el formato exacto (nombre `YYYYMMDDHHMMSS_...`, solo `-- UP --`, solo `PRIMARY KEY`, tablas prefijadas con el esquema del ticket, autor = `git config user.name`, nunca "claude"). **Aplicar la migración** (`nasgrate up`) contra la DB de pruebas lo hace la Fase 5 (`testear-ticket`) al preparar el entorno. **Si el repo `nasgrate` no existe → frená y avisá.** |
 
-## Modo orquestado (invocada por el motor `pipeline-desarrollo`)
+## Modo orquestado (subagente de `resolver-ticket` o del motor `pipeline-desarrollo`)
 
-Cuando la invoca el motor como Fase 4 (el prompt lo dice explícitamente), además de lo de
+Cuando te despacha un orquestador (el prompt lo dice explícitamente), además de lo de
 arriba, terminá devolviendo **este contrato exacto**:
 
 ```
@@ -118,3 +156,7 @@ echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"4\",\"actor\":\"subagente\",\"ti
   codeás y hacés un sanity de arranque.
 - **Commitear/pushear** → no; el usuario maneja git.
 - **Escalar el scope** → implementá solo lo del plan; lo demás es SUGERENCIA o DUDA.
+- **En paralelo, tocar el worktree o el contenedor de otro repo** → cada implementador se
+  queda en su repo; lo que necesita del otro sale del contrato.
+- **No anotar en la bitácora una decisión que el plan no tomaba** → en el juicio de la
+  implementación, una decisión sin rastro es lo primero que el Juez cuestiona.

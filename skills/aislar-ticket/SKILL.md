@@ -26,7 +26,36 @@ antes de eso.
 `.worktrees/T#####-{slug}/<ms>` en la raíz del workspace — carpeta propia, sin relación con
 `.pipeline-lanes/` (eso es del motor `pipeline-desarrollo`, no lo toques ni lo reuses acá).
 
-## Provisionar (por cada repo que el ticket toca)
+## Provisionar: dos etapas
+
+| Etapa | Pasos | Cuánto tarda | Cuándo hace falta | Quién la corre |
+|-------|-------|--------------|-------------------|----------------|
+| **A — worktree** | 1-3 | Segundos | Antes de planear (el plan lee código) y de abrir `mostrar-diff` | El hilo principal, en el paso 1 de `resolver-ticket`. Todos los repos en paralelo |
+| **B — Docker** | 4-6 | Minutos | Recién para el sanity check de la implementación y el testeo | Un subagente en background, despachado al terminar la A, mientras el hilo principal planea |
+
+Si te invocan sin decir etapa, hacé las dos en orden. Si el prompt dice "solo etapa B", los
+worktrees ya existen: verificalos (`git -C .worktrees/T#####-{slug}/<ms> branch --show-current`
+debe dar `T#####`) y seguí desde el paso 4; si alguno falta, frená y devolvé una DUDA.
+
+**La etapa B levanta contenedores de a uno**, aunque haya varios repos: la VM de Docker es
+chica (~3,6 GiB) y varios Hyperf arrancando juntos tumban la DB compartida por OOM.
+Esperá a que cada contenedor quede arriba (logs sin error, healthcheck si lo tiene) antes
+de levantar el siguiente. Si la memoria no alcanza, frená y avisá: no bajes contenedores
+ajenos para hacer lugar.
+
+**En modo subagente, ante cualquier problema de infra, frená y devolvé DUDAS.** No
+"arregles" nada fuera de lo que esta etapa creó (ver las reglas de infra compartida de
+`planear-tests-ticket`). Terminá con el contrato:
+
+```
+ARTEFACTO: [<ms>: contenedor T#####-<ms> arriba, DB T#####-db en :<puerto>]
+DUDAS:
+  - [D1] <qué falló> · <contenedor/comando> · <por qué no se resolvió solo>
+SUGERENCIAS: (ninguna habitualmente)
+ESTADO: completo | frenado-por-duda
+```
+
+### Etapa A — por cada repo (en paralelo entre repos)
 
 1. **Precondición:** el clon canónico (`microservicios/<ms>`) debe estar limpio y en
    `master` actualizado (lo deja así `preparar-repo`, pasos 1-3). Si no lo está,
@@ -41,6 +70,12 @@ antes de eso.
 3. **Copiar config no trackeada si falta:** si `.arcconfig` u otro archivo de credenciales
    está gitignoreado (no viaja con el checkout), copialo del canónico al worktree — sin
    esto, `enviar-review` no va a poder correr `arc diff` desde el worktree.
+
+Los comandos de la etapa A usan `git -C <repo>`, así que se pueden lanzar para todos los
+repos en el mismo mensaje sin que se crucen los directorios de trabajo.
+
+### Etapa B — por cada repo (en serie, de a un contenedor)
+
 4. **Levantar el contenedor `T#####-<ms>`** a partir del `docker-compose.yml`/`Dockerfile`
    propio del servicio (ver `dcac-context/back/docker.md`), con un **bind mount** del
    worktree del paso 2 en el path de código de la imagen. **Bind mount, no copia:** el
@@ -48,8 +83,9 @@ antes de eso.
    se refleja al instante en el otro lado, sin rebuild de imagen.
 5. **Levantar `T#####-db`** (copia del schema/datos de test) y apuntar el `.env` del
    contenedor a esa DB, en un puerto propio del ticket.
-6. Si el ticket trae migración (`crear-migracion`), aplicarla contra **`T#####-db`**, nunca
-   contra la DB compartida.
+6. Si el ticket trae migración (`crear-migracion`) y ya está escrita, aplicarla contra
+   **`T#####-db`**, nunca contra la DB compartida. Si la etapa B corre mientras se planea,
+   la migración todavía no existe: la aplica `testear-ticket` al preparar su entorno.
 
 Los comandos exactos de compose/Dockerfile salen del propio repo — no inventar, seguir el
 que ya usa el servicio.
@@ -86,5 +122,9 @@ que ya usa el servicio.
   edición necesitaría rebuild para verse reflejada.
 - **Confundir esto con `entorno-ticket`** → esa es la versión del motor (`clone --shared`,
   lanes, dashboard). Esta es la standalone para el flujo manual (`resolver-ticket`).
+- **Esperar a que termine la etapa B para empezar a planear** → la B va en background; el
+  plan solo necesita los worktrees de la A.
+- **Levantar los contenedores de varios repos a la vez** → OOM en la VM de Docker; la etapa
+  B va de a uno.
 - **Correr esto antes de que el canónico esté en master actualizado** → el worktree partiría
   de una base vieja; siempre después de los pasos 1-3 de `preparar-repo`.

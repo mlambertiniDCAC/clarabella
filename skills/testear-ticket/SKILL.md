@@ -1,23 +1,54 @@
 ---
 name: testear-ticket
-description: Usar cuando hay que EJECUTAR el testeo ya documentado de un ticket del workspace dcac-ia-context — existe el plan de test (docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md) y una implementación en la branch del ticket, y hay que correr los casos contra la DB de pruebas y verificar el comportamiento. Es la Fase 5 del motor pipeline-desarrollo (separada de implementar). Triggers — "corré los tests documentados de T#####", "ejecutá el testeo de T#####", "probá la implementación de T#####". NO documenta tests (eso es planear-tests-ticket) ni escribe código (eso es implementar-ticket).
+description: Usar cuando hay que EJECUTAR el testeo ya documentado de un ticket del workspace dcac-ia-context — existe el plan de test (docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md) y hay que correr los casos contra la DB de pruebas, en RED (antes de implementar, para confirmar que los tests discriminan) o en GREEN (después de implementar, para verificar la solución). Es la Fase 5 del motor pipeline-desarrollo y los pasos 3.1 (RED) y 3.3 (GREEN) de resolver-ticket, y corre en un subagente que no escribió el código. Triggers — "corré los tests documentados de T#####", "ejecutá el testeo de T#####", "probá la implementación de T#####". NO documenta tests (eso es planear-tests-ticket) ni escribe código (eso es implementar-ticket).
 ---
 
 # Ejecutar tests
 
-Toma el **plan de test documentado** (Fase 3) y una **implementación ya aplicada** (Fase 4)
-y **ejecuta el testeo de comportamiento**: corre los casos, verifica contra la DB de
-pruebas, y **clasifica cada fallo** para que el motor sepa qué hacer. Es la contraparte
-ejecutora de `planear-tests-ticket` (que solo documenta).
+Toma el **plan de test documentado** y **ejecuta el testeo de comportamiento**: corre los
+casos, verifica contra la DB de pruebas, y **clasifica cada resultado** para que quien la
+despachó sepa qué hacer. Es la contraparte ejecutora de `planear-tests-ticket` (que solo
+documenta).
 
 Ordena el trabajo en 3 fases: **preparar entorno → ejecutar → clasificar resultados**.
+
+## Dos modos: RED y GREEN
+
+Los tests salen de la spec, por separado del plan. Esta skill es donde se encuentran con
+el código, dos veces. El prompt que te invoca dice cuál; si no lo dice, es GREEN.
+
+| Modo | Cuándo | Qué se espera | Qué detecta |
+|------|--------|---------------|-------------|
+| **RED** | Antes de implementar, con el entorno del ticket arriba y el código en master | Cada caso da lo que dice su columna "Esperado en RED": `falla` los de comportamiento nuevo, `pasa` los de regresión | Tests que no discriminan (pasan sin implementación) y regresiones que ya estaban rotas |
+| **GREEN** | Después de implementar | Todos los casos pasan | Bugs de implementación y criterios que el plan no cubrió |
+
+En RED no hay tests unitarios del ticket (los escribe la implementación) ni migración del
+ticket (todavía no existe): corré solo los casos de `tests.md`. Que un caso nuevo falle
+porque la ruta o la columna no existen **es** el RED esperado.
+
+## Quién la ejecuta: un contexto que no escribió el código
+
+Esta skill corre en un **subagente nuevo**, no en el hilo que implementó. Quien escribió el
+código tiende a leer sus propias fallas como problemas del test (`test-mal-documentado`) y
+a dar por buena una evidencia ambigua. Por eso:
+
+- En `resolver-ticket` (fase 3: RED y GREEN) y en el motor, la despacha el orquestador con un prompt que
+  dice "modo orquestado". Cada re-ejecución usa un subagente **nuevo**.
+- Si te invocan directo en el hilo que implementó el ticket, despachá esta misma skill en
+  un subagente (`Agent`, `general-purpose`, `model: "sonnet"`) con el ticket, la carpeta,
+  los worktrees y los contenedores, y devolvé su reporte tal cual.
+- Tus fuentes son `tests.md`, el código en los worktrees, los contenedores y la DB. Si el
+  prompt trae explicaciones de por qué se implementó así, no las uses para justificar un
+  resultado.
+- **No modificás código ni `tests.md`.** Ejecutás, verificás y clasificás.
 
 ## Datos requeridos
 
 | Dato | De dónde | Si falta |
 |------|----------|----------|
 | Plan de test | `docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md` | Pedilo / avisá |
-| Implementación | Branch `T#####` de los repos tocados | Si no está implementado, avisá (esto va después de Fase 4) |
+| Implementación (solo GREEN) | Branch `T#####` de los repos tocados | Si no está implementado, avisá |
+| Plan de desarrollo (solo GREEN, solo para clasificar) | `plan.md` de la carpeta del ticket | Sirve para distinguir un bug de un criterio que el plan no cubrió; no lo uses para cambiar qué se espera |
 | Acceso a la DB de pruebas | `db-test`, :3307 | Confirmá contenedor/credenciales; si no los tenés, pedíselos al usuario |
 
 ## Entorno aislado por ticket (cuando corre en el motor)
@@ -56,22 +87,47 @@ de los servicios del flujo a :3307 y reiniciá los contenedores. Cargá las prec
 datos que pide el plan ("Preparación de datos de prueba").
 
 ### Fase 2 — Ejecutar
-Corré, en el orden del plan:
-- **Tests unitarios** dentro del contenedor (según `dcac-context/back/testing.md`).
-- **Curls E2E** documentados: ms directo (headers internos) + por gateway (`/v1/...`, auth real).
-- Por cada caso, la **verificación contra la DB** (la query que el plan definió).
-- Mapeá cada resultado al **escenario Gherkin** correspondiente (Given/When/Then): quedó
-  verde o rojo, con evidencia (respuesta + query).
+Tres tandas, en este orden:
+
+1. **Tests unitarios de todos los repos tocados, en paralelo.** Cada repo tiene su
+   contenedor `T#####-<ms>`: lanzá cada suite en background (`run_in_background`) y juntá
+   los resultados. No dependen entre sí ni de la DB del ticket.
+2. **Curls directos a cada ms**, en paralelo **entre repos** y en el orden del plan
+   **dentro de cada repo** (los casos de un mismo servicio suelen compartir datos
+   preparados). Por cada caso, la **verificación contra la DB** (la query que documentó
+   el plan de test).
+3. **E2E por gateway** (`/v1/...`, auth real), **en serie y al final.** El gateway
+   compartido apunta a un `T#####-<ms>` por vez; si otro ticket lo está usando, esperá o
+   diferí esta tanda y reportalo.
+
+Mapeá cada resultado al **escenario Gherkin** correspondiente (Given/When/Then): quedó
+verde o rojo, con evidencia (respuesta + query).
+
+Si los datos preparados de dos repos viven en la misma `T#####-db` y se pisan (mismas
+filas, mismos IDs), corré esa tanda 2 en serie. Ante la duda, en serie.
 
 ### Fase 3 — Clasificar resultados
-Por cada caso: `PASA` o `FALLA`. Para cada `FALLA`, **clasificá la causa** (esto le dice al
-motor a dónde volver):
+Por cada caso: `PASA` o `FALLA`, comparado contra lo esperado **en el modo que corre**.
+
+**En RED**, lo que hay que reportar es cada caso que no dio su esperado en RED:
+
+| Clasificación | Qué significa | Quién decide |
+|---------------|---------------|--------------|
+| `test-no-discrimina` | Un caso de comportamiento nuevo pasa sin implementación: o el test no ejercita lo que dice, o el comportamiento ya existía | El usuario: se corrige el test o se revisa si el ticket ya estaba resuelto |
+| `regresion-preexistente` | Un caso de regresión falla en master, antes de tocar nada | El usuario: no es culpa del ticket, pero hay que saberlo antes de implementar |
+| `test-mal-documentado` | El caso no se puede ni ejecutar (curl mal formado, query inválida, precondición imposible) | El usuario aprueba la corrección del test |
+
+**En GREEN**, para cada `FALLA`, **clasificá la causa**:
 
 | Clasificación | Qué significa | A dónde vuelve |
 |---------------|---------------|----------------|
-| `bug-implementacion` | El código no hace lo que el plan esperaba | Fase 4 (implementar-ticket) a corregir |
-| `ambiguedad-negocio` | El comportamiento esperado no está claro / el plan y la realidad discrepan por una regla no definida | **DUDA** (hard stop, decide el usuario) |
-| `test-mal-documentado` | El caso/curl/query del plan está mal | Fase 3 (planear-tests-ticket) a corregir |
+| `bug-implementacion` | El plan cubre el caso pero el código no hace lo que tendría que hacer | Implementación, a corregir |
+| `hueco-del-plan` | El caso sale de un criterio de la spec que el plan no contempla | El usuario decide si se amplía el plan o el criterio queda fuera |
+| `ambiguedad-negocio` | El comportamiento esperado no está claro, o la spec y la realidad discrepan por una regla no definida | **DUDA** (hard stop, decide el usuario) |
+| `test-mal-documentado` | El caso/curl/query está mal | El usuario aprueba la corrección del test |
+
+Un test que salió de la spec no se ajusta para que pase con lo implementado: si el código
+y el test discrepan, el test manda hasta que el usuario diga lo contrario.
 
 ### Teardown — dejar la DB como estaba
 `cd microservicios/db-test && docker compose down -v && docker compose up -d`. Revertí los
@@ -81,7 +137,8 @@ motor a dónde volver):
 
 ```
 ARTEFACTO: reporte de ejecución — [caso: PASA/FALLA + clasificación + evidencia]
-RESULTADO: <N pasan / M fallan>
+MODO: RED | GREEN
+RESULTADO: <N pasan / M fallan> (en RED: <K dieron su esperado / J no>)
 FALLAS:
   - [caso X] <clasificación> · <evidencia> · <qué habría que corregir>
 DUDAS:
@@ -91,9 +148,9 @@ SUGERENCIAS:
 ESTADO: completo | frenado-por-duda
 ```
 
-- `ESTADO: completo` **solo si todos los casos pasan.** Si hay fallas, `ESTADO` refleja
-  si son resolubles por el motor (loop a Fase 4/3) o si hay una `ambiguedad-negocio`
-  (`frenado-por-duda`).
+- En GREEN, `ESTADO: completo` **solo si todos los casos pasan.** En RED, `completo` si
+  todos los casos dieron su esperado en RED. Si no, `ESTADO` refleja si se resuelve
+  corrigiendo código o si hay algo que decide el usuario (`frenado-por-duda`).
 - **No arregles el código vos.** Tu trabajo es ejecutar, verificar y clasificar. La
   corrección la hace la fase que corresponda.
 
@@ -110,5 +167,13 @@ echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"5\",\"actor\":\"subagente\",\"ti
 - **Dar "verde" solo por el código HTTP** → sin la query a la DB no está verificado.
 - **Arreglar el código para que pase** → no; eso es implementar-ticket. Vos clasificás.
 - **No dejar teardown** → recreá la DB de pruebas y revertí los `.env`.
-- **No clasificar la falla** → el motor necesita saber si vuelve a Fase 4, a Fase 3, o frena.
+- **No clasificar la falla** → quien te despachó necesita saber si se corrige código, si
+  decide el usuario, o si se frena.
+- **Dar por bueno un RED donde un caso nuevo pasa** → es `test-no-discrimina`, no un éxito.
+- **Leer `plan.md` en RED, o usarlo en GREEN para cambiar qué se espera** → en GREEN solo
+  sirve para distinguir `bug-implementacion` de `hueco-del-plan`.
 - **Reportar sin evidencia** → cada resultado lleva respuesta + query.
+- **Correr el testeo en el mismo hilo que implementó** → va en un subagente nuevo; ver
+  "Quién la ejecuta".
+- **Correr el E2E por gateway en paralelo** → el gateway compartido apunta a un solo
+  `T#####-<ms>` por vez; esa tanda va en serie y al final.

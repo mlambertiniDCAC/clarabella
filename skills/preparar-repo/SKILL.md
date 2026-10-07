@@ -15,7 +15,11 @@ microservicios/<ms> ...` o `cd` a la carpeta). El repo del root (infra/contexto)
 
 ## Los 5 pasos (por repo)
 
-Para cada repositorio identificado, en orden:
+Para cada repositorio identificado, en orden. **Los repos son independientes entre sí:**
+corré los pasos 1-2 de todos en el mismo mensaje (con `git -C <repo>`, nunca `cd`, para
+que las llamadas en paralelo no se crucen de directorio). Esperá a que terminen **todos**
+antes del paso 4: si uno solo frena por cambios sin commitear o por el pull, no se crea
+ningún worktree.
 
 ### 1. Switch a master (con guardia de cambios sin commitear)
 - **Antes de cambiar de rama, verificá que no haya cambios sin commitear**
@@ -44,9 +48,11 @@ todas las escrituras (implementación) pasan a vivir en un entorno aislado propi
 modo en que estés corriendo:
 
 - **Modo manual** (`resolver-ticket`, standalone): invocá `aislar-ticket`
-  con el ticket y este repo. Crea un `git worktree` en branch `T#####` + un contenedor
-  Docker propio que lo monta (bind mount). Es reanudable: si el worktree ya existe, lo
-  reusa.
+  con el ticket y este repo, **solo la etapa A**: crea el `git worktree` en branch
+  `T#####`. Es reanudable: si el worktree ya existe, lo reusa. La etapa B (contenedor +
+  DB del ticket) no la corras acá: `resolver-ticket` la despacha a un subagente en
+  background para no frenar el planeo. Si te invocan standalone, fuera de
+  `resolver-ticket`, hacé las dos etapas.
 - **Modo motor** (`pipeline-desarrollo`): invocá `entorno-ticket`. Clona el canónico
   (`git clone --shared`) en su propia lane (`.pipeline-lanes/T#####-{slug}/<ms>`), en branch
   `T#####`, con contenedor y DB propios.
