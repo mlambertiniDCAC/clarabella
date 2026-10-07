@@ -57,7 +57,7 @@ externo (lo que ve un consumidor del servicio o del endpoint) y las convenciones
 equipo (idioma de los nombres, documentación, cómo se prueba). No le van qué clase tocar,
 qué patrón copiar, qué exporta un módulo internamente, los tipos de una firma interna o el
 alcance técnico de una regla de lint: eso es trabajo del agente del plan, que lo decide y
-lo justifica en su bitácora, y el Juez lo revisa. Si el Escribano ve un problema de ese
+lo resuelve en su artefacto, y el revisor lo mira. Si el Escribano ve un problema de ese
 tipo (por ejemplo, una regla del ticket que bloquea algo que el mismo ticket necesita), lo
 anota en "Fuera de la escritura" con su propuesta, para el agente del plan.
 
@@ -92,7 +92,15 @@ ningún punto está cerrado.
 El orquestador le presenta al usuario `escritura.md` en una sola ronda. Con las respuestas:
 1. Anota cada decisión en `escritura.md` ("Decisión del usuario").
 2. Las agrega a `spec.md`, en `## Decisiones de contrato`, con su número (`E1`, `E2`…).
-3. Recién ahí despacha a los agentes generativos.
+3. Numera los criterios (ver abajo).
+4. Recién ahí despacha a los agentes generativos.
+
+**Numerar los criterios.** Con la escritura cerrada, los criterios de aceptación de
+`spec.md` quedan numerados en su sección `## Criterios de aceptación`, con el formato
+`- [ ] **CA1** — <texto tal cual>`. No se reescribe el texto del ticket: solo se agrega el
+número. Si la escritura sumó un criterio (un borde que el usuario decidió testear), va al
+final con el número siguiente y `(escritura E#)`. Los CA# los usan el plan (`Cubre:`), los
+tests (columna `Criterio`) y `trazabilidad.py`.
 
 El Cronista cuenta después cuántas dudas aparecieron igual durante el proceso: es la
 medida de qué tan buena fue la escritura.

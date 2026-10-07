@@ -128,7 +128,7 @@ comportamiento observable. Si el ticket modifica algo que ya existe, podés leer
 actual **solo para saber cómo se comporta hoy**, nunca para deducir cómo se va a
 implementar el cambio. **No leas `plan.md`** en esta fase aunque exista.
 
-**Tamaño.** Lo que se escribe acá lo leen el Juez, los peritos, el RED, cada GREEN y el
+**Tamaño.** Lo que se escribe acá lo leen el revisor, el RED, cada GREEN y el
 Cronista, así que cada caso de más se paga muchas veces:
 - **Un escenario por criterio de aceptación**, más los bordes que definió la escritura o la
   spec. No sumes casos "por las dudas": cada caso tiene que poder señalar el criterio o la
@@ -140,7 +140,7 @@ Cronista, así que cada caso de más se paga muchas veces:
 
 ### Fase 2 — Diseñar el plan de test (en plan mode)
 Armá: comportamiento esperado (reglas), escenarios Gherkin, tabla de casos (ID,
-precondición, request, esperado, código, esperado en RED), **lista de curls** (ms directo +
+criterio, precondición, request, esperado, código, esperado en RED), **lista de curls** (ms directo +
 por gateway), verificaciones por verbo (tabla de arriba), preparación de datos, teardown
 (DB de pruebas), y fuera de alcance. Cada criterio de aceptación de la spec tiene que tener
 al menos un escenario; si uno no se puede testear, va a fuera de alcance con el motivo.
@@ -148,6 +148,10 @@ al menos un escenario; si uno no se puede testear, va a fuera de alcance con el 
 **Esperado en RED**, por caso:
 - `falla` → el caso ejercita comportamiento nuevo del ticket.
 - `pasa` → el caso es de regresión: comportamiento que ya existe y no se tiene que romper.
+
+**Criterio**, por caso, en la segunda columna de la tabla, siempre: uno o más `CA#` de
+`spec.md` (`CA1, CA2`), o `regresión` para un caso de comportamiento existente. La lee
+`trazabilidad.py`; un caso sin criterio, o un criterio sin caso, frena la revisión.
 
 **Los curls y las queries usan el contrato de la spec.** Lo que la spec no fija (la ruta de
 un endpoint nuevo, el nombre de un campo, el código de un error) no lo deducís ni lo
@@ -206,7 +210,7 @@ Cada request a probar (ms directo con headers internos + E2E por gateway con aut
 Por cada caso, la query de DB que confirma el resultado (según verbo).
 
 ## Tabla de casos de prueba
-| ID | Precondición | Acción / request | Esperado | Código | Esperado en RED |
+| ID | Criterio | Precondición | Acción / request | Esperado | Código | Esperado en RED |
 
 ## Preparación de datos de prueba
 Cómo dejar la DB lista para cada caso (precondiciones).
@@ -272,26 +276,17 @@ ESTADO: completo | frenado-por-duda
 El resto de las reglas (tests de comportamiento, verificación contra DB de pruebas,
 teardown) aplican **igual** en modo orquestado.
 
-## Como agente generativo de `juicio-ticket`
+## Como agente generativo de `resolver-ticket` o `ciclo-ticket`
 
-Si el prompt dice que sos el agente generativo de tests de un juicio, además de lo de
-arriba:
+Si el prompt dice que sos el agente generativo de los tests:
 
-1. **Tus reglas** vienen en el prompt (ver `juicio-ticket` § El oficio de un agente
-   generativo): tu trabajo va a ser juzgado, y lo que el Juez sostenga lo vas a corregir vos.
-2. **Escribí la bitácora mientras trabajás** (`juicio/bitacora-tests.md`, formato en
-   `juicio-ticket`): cada fuente que consultás, cada decisión con su fuente, cada supuesto.
-   Un perito la va a contrastar contra las fuentes reales.
-   Si una decisión sale de una respuesta del Baqueano, citá la consulta (`C3`) en la
-   bitácora en ese momento: si después resulta que la respuesta era mala, ese rastro
-   muestra que el error no fue tuyo.
-3. **Cerrá la bitácora con la presentación ante el Juez:** cada criterio de la spec → la
-   parte (caso de test) que lo cubre.
-4. Cuando te retomen para la **defensa** o la **corrección**, invocá `juicio-ticket` (rol
-   agente generativo, ronda 2 o 6). Si corregís, cambiá **solo** lo que el Juez marcó. Si te
-   interroga un perito, respondé con la verdad: tus respuestas solo las ve
-   el Juez.
-5. Nunca leas `plan.md`, la bitácora ni la acusación del otro agente, ni `juicio/peritajes/`.
+1. Tu única fuente de lo pedido es `spec.md`. **Nunca leas `plan.md`.**
+2. Cada caso lleva su `Criterio`. Un criterio que no se puede testear va a "Fuera de
+   alcance" con el motivo, y es una DUDA.
+3. Las DUDAS van en el contrato; te las contesta el Baqueano o el usuario. Si un esperado
+   sale de una respuesta del Baqueano, citá la consulta (`C3`) en el caso.
+4. Después de entregar, no te van a retomar: la revisión la hace un revisor nuevo y las
+   correcciones, otro agente.
 
 ## Errores comunes
 

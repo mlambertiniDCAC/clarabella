@@ -58,7 +58,7 @@ agregar X en el enum Y", buscan eso y confirman tu idea en vez de mostrarte qué
 un ticket chico en un solo repo no hace falta despachar nada: explorá directo.
 
 Si corrés como subagente (modo orquestado) no podés despachar exploradores: el orquestador
-los corre antes y te pasa sus mapas en `juicio/exploracion-<ms>.md`.
+los corre antes y te pasa sus mapas en `revision/exploracion-<ms>.md`.
 
 Lo que devuelven es un mapa, no el análisis: orientan qué leer, pero la lectura de los
 archivos a modificar la hacés vos con Read (ver abajo).
@@ -83,7 +83,7 @@ plan y llamá `ExitPlanMode` para que el usuario lo apruebe.
 
 **No guardes el archivo todavía.** El plan se documenta recién tras la aprobación.
 
-**Tamaño del plan.** Todo lo que viene después (Juez, peritos, implementadores, Cronista)
+**Tamaño del plan.** Todo lo que viene después (revisor, implementadores, Cronista)
 lee el plan entero, así que cada línea de más se paga varias veces:
 - Snippets **solo de lo que cambia**, con 2-3 líneas de contexto. Nunca un archivo entero.
 - Un archivo sin cambios no aparece. Un cambio mecánico repetido (por ejemplo, ajustar el
@@ -104,6 +104,8 @@ Por qué se hace, qué problema resuelve, resultado esperado. Incluir qué se en
 el código (ej. "el endpoint ya existe pero la transición X → Y falta en el enum").
 
 ## Parte 1 — <repo>
+Cubre: CA1, CA3
+
 Por cada archivo a modificar:
 - **Archivo:** ruta relativa al repo
 - **Estado actual:** snippet del código relevante hoy (copiar de Read, no inventar)
@@ -111,6 +113,7 @@ Por cada archivo a modificar:
 - Si hay tests: qué casos nuevos agregar, con el cuerpo del test siguiendo el patrón del spec existente
 
 ## Parte N — <repo>
+Cubre: CA2
 ...
 
 ## Verificación
@@ -121,6 +124,10 @@ esperar. Incluir cómo correr los tests unitarios dentro del contenedor.
 Qué queda explícitamente afuera.
 ```
 
+**`Cubre:`** es obligatoria en cada Parte: la línea empieza exactamente con `Cubre: ` y
+lista los criterios de `spec.md` que esa Parte implementa (`CA1, CA3`). La lee
+`trazabilidad.py`; un criterio que ninguna Parte cubre frena la revisión.
+
 ### Fin de la skill — NO implementar
 Con el plan documentado, la skill terminó. **No arranques a codear.** Confirmá al usuario dónde quedó
 el archivo del plan y quedate esperando: la implementación es una decisión que toma él
@@ -129,7 +136,7 @@ diga, solo documentaste.
 
 En `resolver-ticket` los tests los escribe otro agente generativo, en paralelo, desde la
 spec. **No leas `tests.md`** para armar ni para ajustar el plan: plan y tests se encuentran
-en el juicio (`juicio-ticket`, donde defendés el plan frente a la documentación) y al
+en la revisión (`revisar-ticket`) y al
 ejecutarse (RED antes de implementar, GREEN después). Lo que necesiten en común, como una ruta o un
 campo que el ticket no fijaba, lo decide el usuario y queda en `spec.md`, en
 `## Decisiones de contrato`: el plan tiene que respetarlo.
@@ -191,26 +198,18 @@ que está colgado:
 echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"2\",\"actor\":\"subagente\",\"tipo\":\"lectura\",\"texto\":\"leyendo <archivo>\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/actividad.jsonl
 ```
 
-## Como agente generativo de `juicio-ticket`
+## Como agente generativo de `resolver-ticket` o `ciclo-ticket`
 
-Si el prompt dice que sos el agente generativo de plan de un juicio, además de lo de
-arriba:
+Si el prompt dice que sos el agente generativo del plan:
 
-1. **Tus reglas** vienen en el prompt (ver `juicio-ticket` § El oficio de un agente
-   generativo): tu trabajo va a ser juzgado, y lo que el Juez sostenga lo vas a corregir vos.
-2. **Escribí la bitácora mientras trabajás** (`juicio/bitacora-plan.md`, formato en
-   `juicio-ticket`): cada fuente que consultás, cada decisión con su fuente, cada supuesto.
-   Un perito la va a contrastar contra las fuentes reales.
-   Si una decisión sale de una respuesta del Baqueano, citá la consulta (`C3`) en la
-   bitácora en ese momento: si después resulta que la respuesta era mala, ese rastro
-   muestra que el error no fue tuyo.
-3. **Cerrá la bitácora con la presentación ante el Juez:** cada criterio de la spec → la
-   parte del plan que lo cubre.
-4. Cuando te retomen para la **defensa** o la **corrección**, invocá `juicio-ticket` (rol
-   agente generativo, ronda 2 o 6). Si corregís, cambiá **solo** lo que el Juez marcó. Si te
-   interroga un perito, respondé con la verdad: tus respuestas solo las ve
-   el Juez.
-5. Nunca leas `tests.md`, la bitácora ni la acusación del otro agente, ni `juicio/peritajes/`.
+1. Tu única fuente de lo pedido es `spec.md`. **Nunca leas `tests.md`.**
+2. Cada Parte lleva su línea `Cubre:`. Un criterio que no sabés cómo cubrir es una DUDA, no
+   una Parte sin `Cubre:`.
+3. Las DUDAS van en el contrato; te las contesta el Baqueano o el usuario. Si una decisión
+   sale de una respuesta del Baqueano, citá la consulta (`C3`) en el plan, al lado de la
+   decisión.
+4. Después de entregar, no te van a retomar: la revisión la hace un revisor nuevo y las
+   correcciones, otro agente. Lo que dejes escrito es lo que cuenta.
 
 ## Errores comunes
 

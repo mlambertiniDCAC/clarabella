@@ -80,14 +80,14 @@ re-despacha con el diagnóstico para corregir ese punto puntual, y se re-ejecuta
 Producí un reporte de implementación con: qué archivos se tocaron (ruta + resumen del
 cambio), en qué branch quedaron, y el resultado del sanity check de arranque.
 
-## Bitácora de implementación
+## Notas de implementación
 
-Mientras implementás, anotá en `juicio/implementacion/bitacora-<ms>.md` (uno por repo) todo
-lo que **no** sale literal del plan: decisiones que tuviste que tomar, patrones que
-espejaste (con ruta:línea del código vecino), desvíos y por qué. Lo que es copia fiel del
-plan no hace falta anotarlo. Después de GREEN, la implementación va a juicio
-(`juicio-ticket` § Juicio de la implementación) y un perito puede contrastar esta bitácora
-con el código.
+Mientras implementás, anotá en `revision/notas-<ms>.md` (uno por repo) **solo lo que no
+sale literal del plan**: un desvío, una decisión que el plan no tomaba, un archivo que el
+plan no nombraba. Una línea por punto, con el por qué. Lo que sigue el plan no se anota.
+
+El revisor de la implementación (`revisar-ticket`) lee estas notas: un cambio fuera del
+plan sin nota es un hallazgo.
 
 ## Implementación en paralelo por repo
 
@@ -108,10 +108,10 @@ implementador (subagente) por repo, todos a la vez. Si sos uno de ellos:
 
 ## En el ciclo
 
-Si te despacha `ciclo-ticket`, sos un agente generativo: el prompt trae las reglas del
-oficio. Tu bitácora es lo que el perito va a contrastar, y en el juicio de la
-implementación te defendés como cualquier agente. Lo que el Juez sostenga lo corregís vos,
-solo en lo marcado. Las faltas están en `ciclo-ticket` § El implementador.
+Si te despacha `ciclo-ticket`, te van a retomar en cada vuelta con lo que falló. Tus notas
+las lee el revisor. Lo que la revisión marque como bloqueante lo corregís vos, solo en lo
+marcado, y después corre un GREEN nuevo. `sin-progreso` está en `ciclo-ticket` § El
+implementador.
 
 ## Skills especiales por tipo de cambio
 
@@ -158,5 +158,5 @@ echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"4\",\"actor\":\"subagente\",\"ti
 - **Escalar el scope** → implementá solo lo del plan; lo demás es SUGERENCIA o DUDA.
 - **En paralelo, tocar el worktree o el contenedor de otro repo** → cada implementador se
   queda en su repo; lo que necesita del otro sale del contrato.
-- **No anotar en la bitácora una decisión que el plan no tomaba** → en el juicio de la
-  implementación, una decisión sin rastro es lo primero que el Juez cuestiona.
+- **No anotar en las notas una decisión que el plan no tomaba** → el revisor lo marca como
+  cambio fuera del plan.
