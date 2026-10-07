@@ -80,13 +80,12 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `resolver-ticket` | Checklist del flujo completo; encadena las demás |
 | `preparar-repo` | Master actualizado + branch `T#####` aislada |
 | `aislar-ticket` | Worktree (etapa A) + contenedor Docker y DB propios del ticket (etapa B, en background) |
-| `planear-ticket` | Plan del ticket (`docs/{proyecto}/{tipo}/T#####-{slug}/plan.md`) |
-| `planear-tests-ticket` | Plan de tests E2E (`tests.md`) desde la spec, sin mirar el plan |
-| `juicio-ticket` | Juicio de plan y tests (y de la implementación): Juez, defensa, peritos; lo sostenido lo corrige el mismo agente, solo en lo marcado |
+| `planear-ticket` | Plan del ticket (`docs/{proyecto}/{tipo}/T#####-{slug}/plan.md`), con `Cubre: CA#` por Parte |
+| `planear-tests-ticket` | Plan de tests E2E (`tests.md`) desde la spec, sin mirar el plan, con columna `Criterio` |
+| `revisar-ticket` | Trazabilidad y reglas críticas por script, y un revisor sonnet de una pasada (plan y tests, o implementación); corrige un agente nuevo, nunca se retoma al autor |
 | `escribano` | Revisa la spec antes de arrancar y le pide al usuario, en una sola ronda, todo lo que falta definir |
 | `baqueano` | Responde las dudas de los agentes generativos desde las fuentes; lleva al usuario solo las decisiones |
 | `ciclo-ticket` | Repite el desarrollo solo hasta la implementación correcta: escritura previa, vueltas con corrección acotada, provisorias, estancamiento y presupuesto |
-| `ensayar-juicio` | Calibra el juicio con un ticket cerrado: código y doc del pasado, auditor contra la solución real |
 | `implementar-ticket` | Implementación guiada del plan |
 | `testear-ticket` | Corre los casos documentados en RED (antes de implementar) o GREEN (después), en un subagente que no escribió el código |
 | `mostrar-diff` | Diff estilo GitHub en un puerto local, en vivo |
@@ -97,32 +96,40 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `consultar-grafo` | Usa `graphify-out/` del repo si existe |
 | `leer-db` | Consultas de solo lectura a MariaDB/Postgres |
 
+### Scripts (`scripts/`, Python stdlib)
+
+| Script | Qué hace |
+|--------|----------|
+| `trazabilidad.py <ticket>` | Cruza los `CA#` de la spec con `Cubre:` del plan y la columna `Criterio` de los tests |
+| `reglas.py --worktree … --ownership …` | Alertas de tabla ajena, llamada entre ms y estado en clase sobre el diff (incluye archivos nuevos); `--snapshot` para el delta |
+| `hechos.py <ticket> --worktree …` | Datos duros para el Cronista (economía con el contexto retomado aparte, RED/GREEN, repos, hallazgos, decisiones) |
+
+Tests: `python3 -m unittest discover -s tests -v`.
+
 ## Flujo de `resolver-ticket`
 
-0. Fijar ticket, tipo, proyecto, guardar la spec (`spec.md`) y escriturarla con el `escribano` (una sola ronda de decisiones)
+0. Fijar ticket, tipo, proyecto, guardar la spec (`spec.md`) y escriturarla con el `escribano` (una sola ronda de decisiones) y numerar los criterios `CA#`
 1. **Preparación**
    - `preparar-repo` → `aislar-ticket` etapa A (worktrees, repos en paralelo)
    - en background: `aislar-ticket` etapa B (contenedores + DB del ticket, de a uno)
    - en paralelo, sin verse: el agente generativo de tests (`planear-tests-ticket`) y el
      del plan (`planear-ticket`, con un explorador por repo antes)
    - sus dudas van al `baqueano` (uno por agente); al usuario llegan solo las decisiones
-2. **El juicio** (`juicio-ticket`): el Juez acusa, los agentes se defienden, los peritos
-   verifican para el Juez, el Juez sentencia, y lo sostenido lo corrige el mismo agente
-   (solo en lo marcado; el Juez verifica solo el cambio). Decide y aprueba el usuario
+2. **Revisión** (`revisar-ticket`): `trazabilidad.py`, un revisor sonnet de una pasada y
+   corrección por un agente nuevo (nunca se retoma al autor). Aprueba el usuario
 3. **La implementación**: `testear-ticket` en RED → implementar con `mostrar-diff`
    abierto (en el hilo principal, o un subagente por repo en paralelo) → `testear-ticket`
-   en GREEN (subagente nuevo) → juicio de la implementación → el usuario valida el diff
+   en GREEN (subagente nuevo) → `reglas.py` + revisión de la implementación → el usuario valida el diff
 4. **La entrega**: `cronista` (crónica + borradores + decisiones al registro, con validación del usuario) → `enviar-review` → `bajar-entorno`
 
 **Modo ciclo** (`ciclo-ticket`): presupuesto y escritura (todas las decisiones juntas,
-antes de arrancar) → preparación → juicio → RED → vueltas de implementar, GREEN y juicio de la implementación hasta
+antes de arrancar) → preparación → revisión → RED → vueltas de implementar, GREEN y revisión de la implementación (solo el delta) hasta
 cumplir la definición de terminado. Las fallas vuelven a quien las causó; el Baqueano
 decide las menores con veto y toma las mayores como provisorias que el usuario confirma o
 veta al final; pausa solo por terreno sensible (financiero, permisos, datos), una corrección fallida dos veces,
 una regresión preexistente o el entorno caído; termina por terminado, estancamiento (misma
 firma tres vueltas) o presupuesto. Al final, crónica y espera al usuario.
 
-**Modelos por rol:** opus para el Juez, el agente del plan y el auditor de ensayos; sonnet
-para el agente de tests, el Baqueano, el Escribano, los implementadores, RED/GREEN, el
-verificador de correcciones y el Cronista; haiku para los peritos y los exploradores
-(estos, solo con tres repos o más).
+**Modelos por rol:** opus para el agente del plan; sonnet para el agente de tests, el
+Baqueano, el Escribano, los revisores, los correctores, los implementadores, RED/GREEN y el
+Cronista; haiku para los exploradores (solo con tres repos o más).
