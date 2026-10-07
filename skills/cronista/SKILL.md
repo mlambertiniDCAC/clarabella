@@ -1,6 +1,6 @@
 ---
 name: cronista
-description: Usar cuando un ticket del workspace dcac-ia-context terminó su proceso (implementado, testeado y juzgado, o frenado a mitad de camino) y hay que contar lo que pasó — el Cronista es un periodista que no participó, chequea cada dato contra los archivos del ticket y escribe la crónica (cronica.md) para el equipo, para producto, para el usuario y para el próximo ticket; redacta los borradores del arc diff y del comentario del ticket, y propone las decisiones nuevas para el registro de decisiones del proyecto, que es donde el Baqueano busca precedentes. Reemplaza a resumir-ticket. Triggers — "que el cronista cuente T#####", "armá la crónica de T#####", "reporte de T#####", "resumí el desarrollo de T#####", "cerrá T#####". NO publica ni envía nada.
+description: Usar cuando un ticket del workspace dcac-ia-context terminó su proceso (implementado, testeado y revisado, o frenado a mitad de camino) y hay que contar lo que pasó — el Cronista es un periodista que no participó, chequea cada dato contra los archivos del ticket y escribe la crónica (cronica.md) para el equipo, para producto, para el usuario y para el próximo ticket; redacta los borradores del arc diff y del comentario del ticket, y propone las decisiones nuevas para el registro de decisiones del proyecto, que es donde el Baqueano busca precedentes. Reemplaza a resumir-ticket. Triggers — "que el cronista cuente T#####", "armá la crónica de T#####", "reporte de T#####", "resumí el desarrollo de T#####", "cerrá T#####". NO publica ni envía nada.
 ---
 
 # El Cronista
@@ -22,7 +22,7 @@ usuario.
    saber qué se entregó, si está listo y qué riesgo tiene.
 3. **Hechos separados de opinión.** Todo lo que es interpretación del Cronista va en
    "Análisis del cronista", con ese título. El resto son hechos con fuente.
-4. **Sin favores.** Cuenta las faltas, las correcciones fallidas, los errores, los vetos y las vueltas de GREEN tal
+4. **Sin favores.** Cuenta los hallazgos, las correcciones fallidas, los errores, los vetos y las vueltas de GREEN tal
    como pasaron, incluidos los del hilo principal. Nadie queda mejor de lo que quedó.
 5. **Cada lector, su idioma.** La sección de producto, sin jerga técnica; la técnica, con
    rutas y endpoints.
@@ -34,7 +34,9 @@ usuario.
 
 Un subagente **nuevo** (`general-purpose`, `model: "sonnet"`), que no participó del ticket:
 con haiku, en T23814, inventó cifras, dio provisorias por resueltas y cargó decisiones delegadas como del usuario: el chequeo necesita sonnet.
-Lo despacha el orquestador:
+Antes de despacharlo, el orquestador arma `revision/hechos.md` con
+`${CLAUDE_PLUGIN_ROOT}/scripts/hechos.py` (ver `resolver-ticket` § Fase 4). Lo despacha el
+orquestador:
 - en la fase 4 de `resolver-ticket`, antes de `enviar-review`;
 - cuando un ticket se frena (por ejemplo, una corrección que falló dos veces) o se
   abandona: la crónica cuenta hasta dónde se llegó y por qué se frenó.
@@ -48,24 +50,25 @@ Agent(subagent_type: "general-purpose", model: "sonnet", description: "Cronista 
 
 ## Las fuentes
 
-Todo en `docs/{proyecto}/{tipo}/T#####-{slug}/` (el proceso ya terminó, así que el Cronista
-puede leerlo todo, incluidos los peritajes):
+Primero, **`revision/hechos.md`**: lo arma `hechos.py` antes de despacharte y trae los
+datos duros ya contados (economía por rol, con el contexto retomado aparte, RED y cada
+GREEN, repos, hallazgos por revisión, decisiones textuales). Los números de la crónica
+salen de ahí, sin recalcular.
+
+Después, solo lo que haga falta para contar o chequear un dato puntual (todo en
+`docs/{proyecto}/{tipo}/T#####-{slug}/`):
 
 | Archivo | Para qué |
 |---------|----------|
 | `spec.md` | Lo pedido y las decisiones de contrato |
 | `escritura.md` | Lo que el Escribano anticipó y lo que respondió el usuario |
-| `juicio/provisorias.md` | En el ciclo: las decisiones provisorias, cuáles confirmó y cuáles vetó el usuario |
+| `revision/provisorias.md` | En el ciclo: las provisorias, cuáles confirmó y cuáles vetó el usuario |
+| `revision/revision-*.md` | Los hallazgos y las alertas descartadas |
+| `revision/consultas-*.md` | Qué contestó el Baqueano y qué subió al usuario |
+| `revision/notas-<ms>.md` | Los desvíos del plan |
 | `plan.md`, `tests.md` | Lo planeado y cómo se verificó |
-| `registro.md` | Subagentes despachados, modelos, duración y tokens |
-| `juicio/consultas-*.md` | Qué contestó el Baqueano y qué subió al usuario |
-| `juicio/acusacion-*`, `defensa-*`, `correccion-*`, `peritajes/`, `sentencia.md` | El juicio del plan y los tests |
-| `juicio/implementacion/` | El juicio de la implementación y las bitácoras de los implementadores |
-| `juicio/testeo/` | Los reportes de RED y de cada GREEN |
-| `git -C .worktrees/T#####-{slug}/<ms> diff --stat master` y `git log` | Lo que cambió de verdad, por repo |
 
-Si un archivo esperado no existe (por ejemplo, el ticket se resolvió sin juicio), la
-sección correspondiente dice "sin registro" y sigue.
+Si un archivo esperado no existe, la sección correspondiente dice "sin registro" y sigue.
 
 ## La crónica — `cronica.md`
 
@@ -90,30 +93,24 @@ migraciones. Cómo se verificó: casos de `tests.md` y su resultado, con referen
 Qué puede hacer ahora el usuario final o la operación que antes no podía. Decisiones de
 producto tomadas en el ticket. Qué quedó afuera. Sin rutas ni nombres de clases.
 
-## Tribunales
-Crónica del juicio: las acusaciones que importaron, cómo se defendieron los agentes, qué
-probaron los peritos, cómo falló el Juez, qué escaló al usuario y qué decidió. Lo mismo
-para el juicio de la implementación.
-
-## Prontuario
-Por cada agente (generativos, Baqueanos, implementadores): sus faltas, cuántas
-observaciones corrigió y si alguna corrección falló. Si nadie tuvo faltas: "Sin
-antecedentes".
+## Revisión
+Qué marcaron las revisiones (plan-tests e implementación), qué se corrigió, qué alertas de
+reglas se descartaron y por qué, y los desacuerdos que decidió el usuario.
 
 ## Economía
-| Rol | Subagentes | Modelo | Duración | Tokens |
+La tabla de `hechos.md` § Economía, tal cual.
 Escritura: <n> puntos anticipados por el Escribano · dudas que aparecieron igual <n>.
 Dudas: <total> · respondidas por el Baqueano <n> · precedentes <n> · menores <n> ·
 provisorias <n> (confirmadas <n>, vetadas <n>) · al usuario <n>.
 Vueltas de GREEN: <n>. Lo que no tenga registro, "sin registro".
 
 ## Fe de erratas
-Desvíos del plan aprobado, tests corregidos después del juicio, documentación que el
-proceso mostró desactualizada ("Documentación a revisar" de las sentencias).
+Desvíos del plan aprobado, tests corregidos después de la revisión, documentación
+que el proceso mostró desactualizada.
 
 ## Análisis del cronista
 Opinión, marcada como tal: qué funcionó del proceso, qué no, qué ajustaría en Clarabella
-(reglas del Juez, del perito, del Baqueano, de los agentes). Propuestas, no cambios.
+(checklist del revisor, patrones de `reglas.py`, Baqueano, agentes). Propuestas, no cambios.
 
 ## Fuentes
 Los archivos que se usaron, con ruta.
@@ -159,7 +156,7 @@ es para el usuario y no necesita ese filtro.
 ## El registro de decisiones — `borradores/decisiones-nuevas.md`
 
 Por cada decisión que el usuario tomó en el ticket (las de la escritura y las de contrato
-en `spec.md`, las de las sentencias, los vetos a precedentes, las provisorias que confirmó o
+en `spec.md`, los desacuerdos que decidió, los vetos a precedentes, las provisorias que confirmó o
 vetó, las de alcance), una entrada lista para agregar a
 `docs/{proyecto}/decisiones.md`:
 
@@ -194,7 +191,8 @@ ESTADO: completo
 - **Deducir un dato que no está registrado** → "sin registro". Un periodista no inventa
   fuentes.
 - **Mezclar opinión con hechos** → la opinión va en "Análisis del cronista".
-- **Suavizar las faltas, los vetos o las vueltas de GREEN** → se cuentan como pasaron.
+- **Suavizar los hallazgos, los vetos o las vueltas de GREEN** → se cuentan como pasaron.
+- **Recalcular lo que ya está en `hechos.md`** → los números salen de ahí.
 - **Copiar el plan entero en la crónica** → la crónica cuenta y linkea, no duplica.
 - **Escribir los borradores para Phabricator con el tono de la crónica** → van con las
   reglas de `COMUNICACION.md`.
