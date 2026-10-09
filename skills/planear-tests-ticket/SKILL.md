@@ -150,8 +150,10 @@ al menos un escenario; si uno no se puede testear, va a fuera de alcance con el 
 - `pasa` → el caso es de regresión: comportamiento que ya existe y no se tiene que romper.
 
 **Criterio**, por caso, en la segunda columna de la tabla, siempre: uno o más `CA#` de
-`spec.md` (`CA1, CA2`), o `regresión` para un caso de comportamiento existente. La lee
-`trazabilidad.py`; un caso sin criterio, o un criterio sin caso, frena la revisión.
+`spec.md` (`CA1, CA2`); si el caso sale de una decisión y no de un criterio (por ejemplo, el
+formato de un campo), el número de esa decisión de `spec.md` (`E1`, `P2`, `C3`); o
+`regresión` para un caso de comportamiento existente. La lee `trazabilidad.py`; un caso sin
+criterio, una decisión que no está en la spec, o un criterio sin caso, frena la revisión.
 
 **Los curls y las queries usan el contrato de la spec.** Lo que la spec no fija (la ruta de
 un endpoint nuevo, el nombre de un campo, el código de un error) no lo deducís ni lo

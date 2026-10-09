@@ -5,7 +5,8 @@ Uso: trazabilidad.py <carpeta del ticket>
 
 - spec.md: criterios en "## Criterios de aceptación" (- [ ] **CA1** — ...).
 - plan.md: cada "## Parte N — <repo>" con una línea "Cubre: CA1, CA3".
-- tests.md: "## Tabla de casos de prueba" que empieza con "| ID | Criterio |".
+- tests.md: "## Tabla de casos de prueba" que empieza con "| ID | Criterio |". Criterio: CA#, una
+  decisión de la spec (E#, P#, C#) o "regresión".
 
 Salida: 0 si todo cierra, 1 si hay huecos, 2 si falta un archivo o el formato no es el esperado.
 """
@@ -14,6 +15,7 @@ import sys
 from pathlib import Path
 
 CA = re.compile(r'\bCA(\d+)\b')
+DECISION = re.compile(r'\b([EPC]\d+)\b')
 SEPARADOR = re.compile(r'^:?-+:?$')
 
 
@@ -73,20 +75,22 @@ def main(carpeta):
     criterios = ids(seccion(textos['spec.md'], 'Criterios de aceptación'))
     if not criterios:
         raise ValueError('spec.md no tiene criterios numerados (CA1, CA2…) en "## Criterios de aceptación"')
+    decisiones = set(DECISION.findall(textos['spec.md']))
     partes = partes_del_plan(textos['plan.md'])
     casos = casos_de_tests(textos['tests.md'])
 
     cubiertos_plan, cubiertos_tests = set(), set()
-    sin_cubre, sin_criterio, inexistentes = [], [], []
+    sin_cubre, sin_criterio, inexistentes, decisiones_inexistentes = [], [], [], []
     for parte, cas, tiene_cubre in partes:
         if not tiene_cubre:
             sin_cubre.append(parte)
         cubiertos_plan |= cas & criterios
         inexistentes += [f'{ca} (plan.md · {parte})' for ca in sorted(cas - criterios, key=orden)]
     for caso, criterio in casos:
-        cas = ids(criterio)
-        if not cas and criterio.lower() not in ('regresión', 'regresion'):
+        cas, decs = ids(criterio), set(DECISION.findall(criterio))
+        if not cas and not decs and criterio.lower() not in ('regresión', 'regresion'):
             sin_criterio.append(caso)
+        decisiones_inexistentes += [f'{d} (tests.md · {caso})' for d in sorted(decs - decisiones)]
         cubiertos_tests |= cas & criterios
         inexistentes += [f'{ca} (tests.md · {caso})' for ca in sorted(cas - criterios, key=orden)]
 
@@ -96,6 +100,7 @@ def main(carpeta):
         ('CA sin caso en tests.md', sorted(criterios - cubiertos_tests, key=orden)),
         ('Casos sin criterio en tests.md', sin_criterio),
         ('CA citados que no existen en spec.md', inexistentes),
+        ('Decisiones citadas que no existen en spec.md', decisiones_inexistentes),
     ]
     hay = [(titulo, lista) for titulo, lista in problemas if lista]
     for titulo, lista in hay:

@@ -77,6 +77,19 @@ class Trazabilidad(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertIn('Casos sin criterio en tests.md: T03', out)
 
+    def test_caso_justificado_por_una_decision(self):
+        spec = SPEC.replace('- CA9 se menciona acá pero no es un criterio.',
+                            '- **E1 · Formato de ids:** string.')
+        tests = TESTS.replace('| T03 | regresión |', '| T03 | E1 |')
+        rc, out = correr(spec=spec, tests=tests)
+        self.assertEqual(rc, 0, out)
+
+    def test_decision_citada_que_no_existe(self):
+        tests = TESTS.replace('| T03 | regresión |', '| T03 | E4 |')
+        rc, out = correr(tests=tests)
+        self.assertEqual(rc, 1)
+        self.assertIn('Decisiones citadas que no existen en spec.md: E4 (tests.md · T03)', out)
+
     def test_ca_citado_que_no_existe(self):
         rc, out = correr(plan=PLAN.replace('Cubre: CA1, CA2', 'Cubre: CA1, CA2, CA7'))
         self.assertEqual(rc, 1)
