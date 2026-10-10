@@ -63,22 +63,22 @@ su modo de sesión principal (el de la 0.3.0) además del modo orquestado que us
 
 ## resolver-proyecto
 
-## Restricciones de la plataforma
+## La plataforma (verificado en la doc de Claude Code)
 
-1. **Todo es plano.** Un subagente no despacha subagentes: el único que despacha es el
-   Coordinador. Los roles "jefe" (QA) escriben órdenes de trabajo en archivos y el
-   Coordinador las despacha.
-2. **El Coordinador es la sesión principal**, no un subagente. La sesión corre con Haiku
-   (`claude --model haiku --plugin-dir …`), esfuerzo medio.
-3. **Modelo y esfuerzo de cada rol viven en tipos de agente del plugin** (`agents/*.md`,
-   `model` y `effort` en el frontmatter). El Coordinador despacha por nombre de tipo y nunca
-   elige modelo.
+1. **Los subagentes pueden despachar subagentes**, hasta 3 capas debajo de la sesión
+   principal (default desde v2.1.219; `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`). Este diseño
+   usa 2: Coordinador → Implementador → Obrero.
+2. **El Coordinador es un tipo de agente que corre como sesión principal:**
+   `claude --agent clarabella:coordinador`. Modelo y esfuerzo quedan en su archivo.
+3. **Cada rol es un tipo de agente del plugin** (`agents/*.md`) con `model` y `effort` en el
+   frontmatter, `skills` para precargar su skill y `tools: Agent(tipo, …)` para limitar a
+   quién puede despachar. Quien despacha lo hace por nombre de tipo y nunca elige modelo.
 
 ## Roles
 
 | Rol | Tipo de agente | Modelo · esfuerzo | Lee | Escribe |
 |-----|----------------|-------------------|-----|---------|
-| Coordinador | sesión principal + skill `resolver-proyecto` | Haiku · medio | `estado.json`, contratos de salida | `estado.json`, `registro.md` |
+| Coordinador | `coordinador` (sesión principal, `--agent`), precarga `resolver-proyecto` | Haiku · medio | `estado.json`, contratos de salida | `estado.json`, `registro.md` |
 | Escribano | `clarabella-escribano` | Sonnet · alto | spec del ticket | `escritura.md` |
 | Generador de plan | `clarabella-generador-plan` | Sonnet · alto | spec, doc, código | `plan.md` con `## Contrato` |
 | Generador de tests | `clarabella-generador-tests` | Sonnet · alto | spec, doc, DB (lectura) | `tests.md` |
@@ -87,10 +87,14 @@ su modo de sesión principal (el de la 0.3.0) además del modo orquestado que us
 | Corrector | `clarabella-corrector` | Sonnet · medio | un artefacto + sus hallazgos | el artefacto corregido |
 | Juez | sesión aparte | Opus · alto | `lote/fichas/`, `alineacion.md`, contratos | `lote/dictamen.md` |
 | QA | `clarabella-qa` | Sonnet · alto | `tests.md`, entorno del ticket | `casos/<ms>/T##.sh` |
-| Obrero | `clarabella-obrero` | Sonnet · medio (alto al escalar) | plan, Parte de su ms | código en su worktree, `revision/notas-<ms>.md` |
-| Clasificador | `clarabella-clasificador` | Sonnet · bajo | salida cruda de los casos que fallan | clasificación por caso |
+| Implementador | `clarabella-implementador` (despacha Obreros y Correctores) | Sonnet · medio | plan, `alineacion.md`, salida de `correr-casos.sh` | `revision/implementacion.md` (vueltas, clasificación de fallas) |
+| Obrero | `clarabella-obrero` / `clarabella-obrero-alto` | Sonnet · medio (alto al escalar) | plan, Parte de su ms | código en su worktree, `revision/notas-<ms>.md` |
 | Revisor | `revisar-ticket` (0.5.0) | Sonnet · medio | diff, plan, `reglas.py` | `revision/revision-impl-<ms>.md` |
 | Cronista | `cronista` (0.5.0) | Sonnet | `hechos.md` | `cronica.md`, borradores |
+
+**Quién despacha a quién:** el Coordinador despacha a todos los roles de los pasos 0 a 4 y,
+en el paso 6, al QA y a un Implementador por ticket. El Implementador despacha a sus Obreros
+y, para `hueco-del-plan` o `test-mal-documentado`, a un Corrector. Nadie más despacha.
 
 **El Coordinador es mecánico.** Lee `estado.json`, despacha con prompts de plantilla y
 reenvía rutas. No resume, no decide, no le cuenta nada al usuario con sus palabras: copia o
@@ -179,15 +183,18 @@ Por ticket, en orden topológico:
 3. **RED = `correr-casos.sh`** (0 tokens). Los casos nuevos tienen que fallar y los de
    regresión pasar: eso valida también los scripts del QA. Un caso que no discrimina vuelve
    al QA.
-4. **Obreros** (Sonnet, medio), uno por microservicio, en paralelo entre repos del mismo
-   ticket. Nunca dos en el mismo repo.
-5. **GREEN = `correr-casos.sh`** (0 tokens).
-6. **Clasificador** (Sonnet, bajo) solo para los casos que fallan, con la salida cruda:
-   `bug-implementacion` → obrero; `hueco-del-plan`, `test-mal-documentado` → corrector
-   nuevo; `ambiguedad-negocio` → usuario.
-7. **Escalado:** el mismo caso falla en dos GREEN seguidos → el obrero siguiente va con
-   esfuerzo alto y el diagnóstico.
-8. Con GREEN completo: `revisar-ticket` modo implementación (0.5.0).
+4. **Implementador** (Sonnet, medio), uno por ticket, despachado por el Coordinador. Él:
+   - despacha **un Obrero por microservicio**, en paralelo entre repos del ticket (nunca
+     dos en el mismo repo);
+   - corre **GREEN = `correr-casos.sh`** (0 tokens);
+   - clasifica los casos que fallan con su salida cruda: `bug-implementacion` → el Obrero de
+     ese repo; `hueco-del-plan`, `test-mal-documentado` → un Corrector nuevo;
+     `ambiguedad-negocio` → lo devuelve al Coordinador para el usuario;
+   - **escala:** el mismo caso falla en dos GREEN seguidos → el siguiente intento va a
+     `clarabella-obrero-alto` con el diagnóstico;
+   - lleva la firma de cada vuelta (estancamiento, `sin-progreso`) y vuelve al Coordinador
+     con un resumen corto y la ruta de `revision/implementacion.md`.
+5. Con GREEN completo: `revisar-ticket` modo implementación (0.5.0).
 
 El siguiente ticket del orden arranca cuando el anterior está en GREEN.
 
@@ -221,7 +228,7 @@ El siguiente ticket del orden arranca cuando el anterior está en GREEN.
 |-------|------|
 | `skills/resolver-proyecto/SKILL.md` | Skill del Coordinador: pasos, plantillas de prompts, `estado.json` |
 | `skills/juzgar-proyecto/SKILL.md` | Skill del Juez para la sesión aparte |
-| `agents/clarabella-*.md` | Tipos de agente con modelo y esfuerzo (tabla de roles) |
+| `agents/*.md` | Tipos de agente con modelo, esfuerzo, skill precargada y a quién despachan (tabla de roles) |
 | `scripts/contratos.py` | Cruce Expone/Consume, orden topológico, `--deriva` |
 | `scripts/fichas.py` | Fichas por ticket para el juicio |
 | `scripts/correr-casos.sh` | Corre `casos/<ms>/T##.sh`, resume pasa/falla con salida cruda |
@@ -248,7 +255,6 @@ Se reusan de 0.5.0: `trazabilidad.py`, `reglas.py`, `hechos.py`, `revisar-ticket
 
 ## Fuera de alcance
 
-- Jerarquías de subagentes (no las permite la plataforma).
 - `pipeline-desarrollo` y el dashboard.
 
 ## Verificación
