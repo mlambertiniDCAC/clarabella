@@ -28,6 +28,15 @@ Ella deriva el pedido a la skill que corresponde. Un hook del plugin detecta su 
 cada mensaje, así que no depende de que Claude "adivine" la skill. Si preferís, podés
 invocar cualquier skill directo (`/clarabella:resolver-ticket`).
 
+## Dos modos
+
+| Modo | Cómo | Para qué |
+|------|------|----------|
+| **Manual** | "Clarabella, ayudame con T#####" → `resolver-ticket` | Un ticket, vos con el control: 8 pasos en la sesión, sin subagentes |
+| **Autónomo** | `claude --agent clarabella:coordinador` → `resolver-proyecto` | Uno o más tickets relacionados: generadores, alineación, juicio antes de implementar, Implementador con Obreros, casos como scripts |
+
+El juicio de un proyecto corre en una sesión aparte: `claude --agent clarabella:juez`.
+
 ## Instalación
 
 Desde Claude Code:
@@ -77,7 +86,9 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | Skill | Para qué |
 |-------|----------|
 | `clarabella` | Puerta de entrada: entiende el pedido y deriva a la skill que va |
-| `resolver-ticket` | Checklist del flujo completo; encadena las demás |
+| `resolver-ticket` | Los 8 pasos manuales (0.3.0): vos con el control, en la sesión, sin subagentes |
+| `resolver-proyecto` | Uno o más tickets, solos: Coordinador, generadores, alineación, juicio antes de implementar, Implementador con Obreros, casos como scripts |
+| `juzgar-proyecto` | El Juez, en sesión aparte: dictamina si la solución de un lote sirve, antes de implementarla |
 | `preparar-repo` | Master actualizado + branch `T#####` aislada |
 | `aislar-ticket` | Worktree (etapa A) + contenedor Docker y DB propios del ticket (etapa B, en background) |
 | `planear-ticket` | Plan del ticket (`docs/{proyecto}/{tipo}/T#####-{slug}/plan.md`), con `Cubre: CA#` por Parte |
@@ -85,9 +96,9 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `revisar-ticket` | Trazabilidad y reglas críticas por script, y un revisor sonnet de una pasada (plan y tests, o implementación); corrige un agente nuevo, nunca se retoma al autor |
 | `escribano` | Revisa la spec antes de arrancar y le pide al usuario, en una sola ronda, todo lo que falta definir |
 | `baqueano` | Responde las dudas de los agentes generativos desde las fuentes; lleva al usuario solo las decisiones |
-| `ciclo-ticket` | Repite el desarrollo solo hasta la implementación correcta: escritura previa, vueltas con corrección acotada, provisorias, estancamiento y presupuesto |
-| `implementar-ticket` | Implementación guiada del plan |
-| `testear-ticket` | Corre los casos documentados en RED (antes de implementar) o GREEN (después), en un subagente que no escribió el código |
+| `implementar-ticket` | Implementación guiada del plan (también la usan los Obreros) |
+| `testear-ticket` | Corre los casos documentados en RED o GREEN; en el flujo manual, en la sesión principal |
+| `resumir-ticket` | Resumen de cierre del flujo manual |
 | `mostrar-diff` | Diff estilo GitHub en un puerto local, en vivo |
 | `cronista` | La crónica del ticket (para equipo, producto, el usuario y el próximo ticket), borradores de arc diff y comentario, y el registro de decisiones del proyecto |
 | `enviar-review` | Commit + `arc diff --create`, solo con aprobación explícita |
@@ -103,33 +114,53 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `trazabilidad.py <ticket>` | Cruza los `CA#` de la spec con `Cubre:` del plan y la columna `Criterio` de los tests |
 | `reglas.py --worktree … --ownership …` | Alertas de tabla ajena, llamada entre ms y estado en clase sobre el diff (incluye archivos nuevos); `--snapshot` para el delta |
 | `hechos.py <ticket> --worktree …` | Datos duros para el Cronista (economía con el contexto retomado aparte, RED/GREEN, repos, hallazgos, decisiones) |
+| `contratos.py <tickets>` | Cruza lo que cada ticket expone y consume, detecta consumos sin dueño y ciclos, y da el orden del lote; `--deriva` al cierre |
+| `fichas.py <ticket>` | Ficha de un ticket para el juicio |
+| `correr_casos.py <ticket> [--red]` | RED y GREEN sin tokens: corre `casos/<ms>/T##.sh` |
 
 Tests: `python3 -m unittest discover -s tests -v`.
 
-## Flujo de `resolver-ticket`
+## Flujo de `resolver-ticket` (manual)
 
-0. Fijar ticket, tipo, proyecto, guardar la spec (`spec.md`) y escriturarla con el `escribano` (una sola ronda de decisiones) y numerar los criterios `CA#`
-1. **Preparación**
-   - `preparar-repo` → `aislar-ticket` etapa A (worktrees, repos en paralelo)
-   - en background: `aislar-ticket` etapa B (contenedores + DB del ticket, de a uno)
-   - en paralelo, sin verse: el agente generativo de tests (`planear-tests-ticket`) y el
-     del plan (`planear-ticket`, con un explorador por repo antes)
-   - sus dudas van al `baqueano` (uno por agente); al usuario llegan solo las decisiones
-2. **Revisión** (`revisar-ticket`): `trazabilidad.py`, un revisor sonnet de una pasada y
-   corrección por un agente nuevo (nunca se retoma al autor). Aprueba el usuario
-3. **La implementación**: `testear-ticket` en RED → implementar con `mostrar-diff`
-   abierto (en el hilo principal, o un subagente por repo en paralelo) → `testear-ticket`
-   en GREEN (subagente nuevo) → `reglas.py` + revisión de la implementación → el usuario valida el diff
-4. **La entrega**: `cronista` (crónica + borradores + decisiones al registro, con validación del usuario) → `enviar-review` → `bajar-entorno`
+0. Fijar ticket, tipo, proyecto y `spec.md` (criterios numerados `CA#`)
+1. `preparar-repo` → `aislar-ticket`
+2. `planear-ticket`
+3. `planear-tests-ticket` (desde la spec, sin mirar el plan)
+4. Implementar (directo o `implementar-ticket`) con `mostrar-diff` en vivo
+5. `testear-ticket` (GREEN, en la sesión)
+6. `mostrar-diff`
+7. `resumir-ticket`
+8. `enviar-review`; después, `bajar-entorno`
 
-**Modo ciclo** (`ciclo-ticket`): presupuesto y escritura (todas las decisiones juntas,
-antes de arrancar) → preparación → revisión → RED → vueltas de implementar, GREEN y revisión de la implementación (solo el delta) hasta
-cumplir la definición de terminado. Las fallas vuelven a quien las causó; el Baqueano
-decide las menores con veto y toma las mayores como provisorias que el usuario confirma o
-veta al final; pausa solo por terreno sensible (financiero, permisos, datos), una corrección fallida dos veces,
-una regresión preexistente o el entorno caído; termina por terminado, estancamiento (misma
-firma tres vueltas) o presupuesto. Al final, crónica y espera al usuario.
+## Flujo de `resolver-proyecto` (autónomo)
 
-**Modelos por rol:** opus para el agente del plan; sonnet para el agente de tests, el
-Baqueano, el Escribano, los revisores, los correctores, los implementadores, RED/GREEN y el
-Cronista; haiku para los exploradores (solo con tres repos o más).
+Se arranca con `claude --agent clarabella:coordinador` desde la raíz del workspace.
+
+0. **Armar el lote:** tickets, specs, Escribano por ticket (una sola ronda de decisiones con vos)
+1. y 2. **Generadores** de plan (con `## Contrato`) y de tests, por ticket, sin verse
+3. **Alineación:** `trazabilidad.py`, `contratos.py` (orden del lote) y el Alineador
+4. **Corrección:** Verificador (Chain-of-Verification) y Correctores nuevos; se verifica con scripts
+5. **Juicio de valor** en sesión aparte (`claude --agent clarabella:juez`): sirve, se recorta o se frena
+6. **Implementación**, en el orden del lote: QA escribe los casos como scripts, RED, el
+   Implementador despacha un Obrero por microservicio y corre GREEN, y un Revisor por repo
+7. **Cierre:** integración del lote, deriva de contratos, medición, crónica y envío en orden
+
+## Roles de `resolver-proyecto`
+
+| Rol | Modelo · esfuerzo | Qué hace |
+|-----|-------------------|----------|
+| Coordinador | Haiku · medio | Sesión principal: despacha, lleva `estado.json`; no decide |
+| Escribano | Sonnet · alto | Revisa cada spec antes de arrancar |
+| Baqueano | Sonnet · medio | Contesta las dudas de los generadores desde las fuentes |
+| Generador de plan / de tests | Sonnet · alto | Escriben `plan.md` y `tests.md` |
+| Alineador | Opus · alto | Cruza los contratos del lote y marca los choques |
+| Verificador | Sonnet · medio | Preguntas desde la spec, contestadas sin ver al generador |
+| Corrector | Sonnet · medio | Corrige solo lo marcado |
+| Juez | Opus · alto | Sesión aparte: ¿la solución sirve? |
+| QA | Sonnet · alto | Convierte los casos en scripts |
+| Implementador | Sonnet · medio | Despacha Obreros, corre GREEN, clasifica fallas |
+| Obrero | Sonnet · medio (alto al escalar) | Implementa la Parte de un microservicio |
+| Revisor | Sonnet · medio | Revisa la implementación de un repo |
+| Cronista | Sonnet · medio | Cuenta lo que pasó |
+
+Quién despacha: el Coordinador a todos; el Implementador a sus Obreros, Correctores y QA.

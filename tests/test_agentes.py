@@ -23,6 +23,7 @@ ROLES = {
     'juez': ('opus', 'high'),
 }
 DESPACHAN = {'coordinador', 'implementador'}
+SESION_PRINCIPAL = {'coordinador', 'juez'}
 
 
 def frontmatter(ruta):
@@ -73,6 +74,15 @@ class Agentes(unittest.TestCase):
                 self.assertFalse(despachados, f'{ruta.name} no despacha')
                 self.assertIn('Agent', lista(f.get('disallowedTools', '')), f'{ruta.name}')
 
+
+    def test_sesion_principal_invoca_su_skill(self):
+        # Con `claude --agent`, el campo skills no se precarga (verificado con Claude Code
+        # 2.1.296): el cuerpo tiene que mandar a invocarla con la herramienta Skill.
+        for nombre in SESION_PRINCIPAL:
+            ruta = AGENTES / f'{nombre}.md'
+            skill = lista(frontmatter(ruta)['skills'])[0]
+            cuerpo = ruta.read_text(encoding='utf-8').split('---', 2)[2]
+            self.assertIn(f'invocá la skill `{skill}` con la herramienta Skill', cuerpo, nombre)
 
 if __name__ == '__main__':
     unittest.main()
