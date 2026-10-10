@@ -31,7 +31,7 @@ antes de eso.
 | Etapa | Pasos | Cuánto tarda | Cuándo hace falta | Quién la corre |
 |-------|-------|--------------|-------------------|----------------|
 | **A — worktree** | 1-3 | Segundos | Antes de planear (el plan lee código) y de abrir `mostrar-diff` | El hilo principal, en el paso 1 de `resolver-ticket`. Todos los repos en paralelo |
-| **B — Docker** | 4-6 | Minutos | Recién para el sanity check de la implementación y el testeo | Un subagente en background, despachado al terminar la A, mientras el hilo principal planea |
+| **B — Docker** | 4-6 | Minutos | Recién para el sanity check de la implementación y el testeo | En background (Bash), al terminar la A, mientras se planea: la sesión de `resolver-ticket` o el Coordinador de `resolver-proyecto` |
 
 Si te invocan sin decir etapa, hacé las dos en orden. Si el prompt dice "solo etapa B", los
 worktrees ya existen: verificalos (`git -C .worktrees/T#####-{slug}/<ms> branch --show-current`

@@ -116,6 +116,12 @@ Por cada archivo a modificar:
 Cubre: CA2
 ...
 
+## Contrato
+### Expone
+- `VERBO /ruta` — body → respuesta
+### Consume
+- `VERBO /ruta` — de T##### | existente
+
 ## Verificación
 Comandos concretos para probar el cambio: docker exec, curl/PUT con body exacto, qué respuesta
 esperar. Incluir cómo correr los tests unitarios dentro del contenedor.
@@ -123,6 +129,10 @@ esperar. Incluir cómo correr los tests unitarios dentro del contenedor.
 ## Fuera de alcance
 Qué queda explícitamente afuera.
 ```
+
+**`## Contrato`** lista lo que el cambio expone y lo que consume de otros servicios o
+tickets. En `resolver-ticket` es opcional; en `resolver-proyecto`, obligatoria (formato en
+"Como generador de `resolver-proyecto`").
 
 **`Cubre:`** es obligatoria en cada Parte: la línea empieza exactamente con `Cubre: ` y
 lista los criterios de `spec.md` que esa Parte implementa (`CA1, CA3`). La lee
@@ -134,8 +144,8 @@ el archivo del plan y quedate esperando: la implementación es una decisión que
 explícitamente y por separado (ej. "dale, implementá", "arrancá con la Parte 1"). Hasta que no lo
 diga, solo documentaste.
 
-En `resolver-ticket` los tests los escribe otro agente generativo, en paralelo, desde la
-spec. **No leas `tests.md`** para armar ni para ajustar el plan: plan y tests se encuentran
+Los tests se escriben aparte, desde la spec (paso 3 de `resolver-ticket`, o el generador
+de tests en `resolver-proyecto`). **No leas `tests.md`** para armar ni para ajustar el plan: plan y tests se encuentran
 en la revisión (`revisar-ticket`) y al
 ejecutarse (RED antes de implementar, GREEN después). Lo que necesiten en común, como una ruta o un
 campo que el ticket no fijaba, lo decide el usuario y queda en `spec.md`, en
@@ -153,7 +163,7 @@ ticket lo pide, el plan debe **incorporar esas reglas** en la parte correspondie
 No inventes migraciones que el ticket no pide. Si el ticket necesita una y no dice en qué
 esquema, es una **DUDA**.
 
-## Modo orquestado (subagente de `resolver-ticket` o del motor `pipeline-desarrollo`)
+## Modo orquestado (subagente de `resolver-proyecto` o del motor `pipeline-desarrollo`)
 
 Esta skill tiene **dos modos**. El default es **standalone** (todo lo de arriba: gate
 humano con `ExitPlanMode`, documentar recién tras la aprobación). Pero cuando la invoca
@@ -198,7 +208,7 @@ que está colgado:
 echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"2\",\"actor\":\"subagente\",\"tipo\":\"lectura\",\"texto\":\"leyendo <archivo>\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/actividad.jsonl
 ```
 
-## Como agente generativo de `resolver-ticket` o `ciclo-ticket`
+## Como generador de `resolver-proyecto`
 
 Si el prompt dice que sos el agente generativo del plan:
 
@@ -210,6 +220,18 @@ Si el prompt dice que sos el agente generativo del plan:
    decisión.
 4. Después de entregar, no te van a retomar: la revisión la hace un revisor nuevo y las
    correcciones, otro agente. Lo que dejes escrito es lo que cuenta.
+5. **`## Contrato`**, al final del plan, siempre:
+
+       ## Contrato
+       ### Expone
+       - `POST /internal/permisos/usuarios` — body `{usuarioId, sujetoId}` → 201 `{id}`
+       ### Consume
+       - `GET /compliance/:id/permisos-psp` — de T23821
+       - `POST /internal/cuentas/:id/usuarios/sync-compliance` — existente
+
+   Cada endpoint entre backticks como `VERBO /ruta`. Un Consume dice de qué ticket del lote
+   sale (`de T#####`) o que ya existe (`existente`). Si no expone o no consume nada, la
+   subsección lleva `- (nada)`. Lo lee `contratos.py`.
 
 ## Errores comunes
 

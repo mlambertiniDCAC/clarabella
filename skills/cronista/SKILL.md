@@ -1,6 +1,6 @@
 ---
 name: cronista
-description: Usar cuando un ticket del workspace dcac-ia-context terminó su proceso (implementado, testeado y revisado, o frenado a mitad de camino) y hay que contar lo que pasó — el Cronista es un periodista que no participó, chequea cada dato contra los archivos del ticket y escribe la crónica (cronica.md) para el equipo, para producto, para el usuario y para el próximo ticket; redacta los borradores del arc diff y del comentario del ticket, y propone las decisiones nuevas para el registro de decisiones del proyecto, que es donde el Baqueano busca precedentes. Reemplaza a resumir-ticket. Triggers — "que el cronista cuente T#####", "armá la crónica de T#####", "reporte de T#####", "resumí el desarrollo de T#####", "cerrá T#####". NO publica ni envía nada.
+description: Usar cuando un ticket del workspace dcac-ia-context terminó su proceso (implementado, testeado y revisado, o frenado a mitad de camino) y hay que contar lo que pasó — el Cronista es un periodista que no participó, chequea cada dato contra los archivos del ticket y escribe la crónica (cronica.md) para el equipo, para producto, para el usuario y para el próximo ticket; redacta los borradores del arc diff y del comentario del ticket, y propone las decisiones nuevas para el registro de decisiones del proyecto, que es donde el Baqueano busca precedentes. En resolver-proyecto; en el flujo manual (resolver-ticket) el resumen lo hace resumir-ticket. Triggers — "que el cronista cuente T#####", "armá la crónica de T#####", "reporte de T#####", "resumí el desarrollo de T#####", "cerrá T#####". NO publica ni envía nada.
 ---
 
 # El Cronista
@@ -32,12 +32,12 @@ usuario.
 
 ## Quién y cuándo
 
-Un subagente **nuevo** (`general-purpose`, `model: "sonnet"`), que no participó del ticket:
+El tipo de agente `clarabella:cronista` (sonnet), que no participó del ticket:
 con haiku, en T23814, inventó cifras, dio provisorias por resueltas y cargó decisiones delegadas como del usuario: el chequeo necesita sonnet.
 Antes de despacharlo, el orquestador arma `revision/hechos.md` con
-`${CLAUDE_PLUGIN_ROOT}/scripts/hechos.py` (ver `resolver-ticket` § Fase 4). Lo despacha el
+`${CLAUDE_PLUGIN_ROOT}/scripts/hechos.py` (ver `resolver-proyecto` § Paso 7). Lo despacha el
 orquestador:
-- en la fase 4 de `resolver-ticket`, antes de `enviar-review`;
+- en el cierre de `resolver-proyecto` (paso 7), antes de `enviar-review`;
 - cuando un ticket se frena (por ejemplo, una corrección que falló dos veces) o se
   abandona: la crónica cuenta hasta dónde se llegó y por qué se frenó.
 
@@ -62,7 +62,7 @@ Después, solo lo que haga falta para contar o chequear un dato puntual (todo en
 |---------|----------|
 | `spec.md` | Lo pedido y las decisiones de contrato |
 | `escritura.md` | Lo que el Escribano anticipó y lo que respondió el usuario |
-| `revision/provisorias.md` | En el ciclo: las provisorias, cuáles confirmó y cuáles vetó el usuario |
+| `revision/provisorias.md` | En `resolver-proyecto`: las provisorias, cuáles confirmó y cuáles vetó el usuario |
 | `revision/revision-*.md` | Los hallazgos y las alertas descartadas |
 | `revision/consultas-*.md` | Qué contestó el Baqueano y qué subió al usuario |
 | `revision/notas-<ms>.md` | Los desvíos del plan |

@@ -26,21 +26,16 @@ En RED no hay tests unitarios del ticket (los escribe la implementación) ni mig
 ticket (todavía no existe): corré solo los casos de `tests.md`. Que un caso nuevo falle
 porque la ruta o la columna no existen **es** el RED esperado.
 
-## Quién la ejecuta: un contexto que no escribió el código
+## Quién la ejecuta
 
-Esta skill corre en un **subagente nuevo**, no en el hilo que implementó. Quien escribió el
-código tiende a leer sus propias fallas como problemas del test (`test-mal-documentado`) y
-a dar por buena una evidencia ambigua. Por eso:
+- En `resolver-ticket` (manual) la corre la **sesión principal**, a la vista del usuario:
+  él es el contexto independiente que mira los resultados.
+- En el motor `pipeline-desarrollo`, un **subagente nuevo** por corrida, con un prompt que
+  dice "modo orquestado".
+- En `resolver-proyecto` no se usa: los casos son scripts (`correr_casos.py`).
 
-- En `resolver-ticket` (fase 3: RED y GREEN) y en el motor, la despacha el orquestador con un prompt que
-  dice "modo orquestado". Cada re-ejecución usa un subagente **nuevo**.
-- Si te invocan directo en el hilo que implementó el ticket, despachá esta misma skill en
-  un subagente (`Agent`, `general-purpose`, `model: "sonnet"`) con el ticket, la carpeta,
-  los worktrees y los contenedores, y devolvé su reporte tal cual.
-- Tus fuentes son `tests.md`, el código en los worktrees, los contenedores y la DB. Si el
-  prompt trae explicaciones de por qué se implementó así, no las uses para justificar un
-  resultado.
-- **No modificás código ni `tests.md`.** Ejecutás, verificás y clasificás.
+En cualquier caso: tus fuentes son `tests.md`, el código en los worktrees, los contenedores
+y la DB. **No modificás código ni `tests.md`.** Ejecutás, verificás y clasificás.
 
 ## Datos requeridos
 

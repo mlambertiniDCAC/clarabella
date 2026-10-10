@@ -1,6 +1,6 @@
 ---
 name: escribano
-description: Usar al arrancar un ticket del workspace dcac-ia-context, ANTES de despachar a cualquier agente, para revisar la spec y dar fe de si está completa — el Escribano lista los puntos que la spec deja abiertos, las contradicciones con la documentación y con tickets anteriores, y los huecos de contrato que nadie mencionó (entradas inválidas, duplicados, permisos, códigos de error…), descarta lo que el usuario ya decidió, y le presenta al usuario todo lo demás en una sola ronda, cada punto con opciones y una propuesta por defecto. Con las respuestas, la spec queda escriturada y recién ahí arrancan los agentes. Triggers — "que el escribano revise la spec de T#####", "escriturá la spec", paso 0 de resolver-ticket y etapa 0 de ciclo-ticket. NO planea, NO escribe tests.
+description: Usar al arrancar un ticket del workspace dcac-ia-context, ANTES de despachar a cualquier agente, para revisar la spec y dar fe de si está completa — el Escribano lista los puntos que la spec deja abiertos, las contradicciones con la documentación y con tickets anteriores, y los huecos de contrato que nadie mencionó (entradas inválidas, duplicados, permisos, códigos de error…), descarta lo que el usuario ya decidió, y le presenta al usuario todo lo demás en una sola ronda, cada punto con opciones y una propuesta por defecto. Con las respuestas, la spec queda escriturada y recién ahí arrancan los agentes. Triggers — "que el escribano revise la spec de T#####", "escriturá la spec", paso 0 de resolver-proyecto (uno por ticket), o a pedido. NO planea, NO escribe tests.
 ---
 
 # El Escribano
@@ -12,9 +12,8 @@ usuario responde todo junto, una sola vez, y los agentes arrancan con la spec ce
 
 ## Quién y cuándo
 
-Un subagente nuevo (`general-purpose`, `model: "sonnet"`), despachado:
-- en el paso 0 de `resolver-ticket`, con `spec.md` ya guardada;
-- en la etapa 0 de `ciclo-ticket`.
+El tipo de agente `clarabella:escribano`, despachado en el paso 0 de `resolver-proyecto`,
+uno por ticket, con `spec.md` ya guardada. También se puede pedir standalone.
 
 ```
 Agent(subagent_type: "general-purpose", model: "sonnet", description: "Escribano T#####",

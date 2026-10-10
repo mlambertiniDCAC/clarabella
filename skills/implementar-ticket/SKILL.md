@@ -106,12 +106,12 @@ implementador (subagente) por repo, todos a la vez. Si sos uno de ellos:
   plan se la asigna.
 - Terminá con el contrato de modo orquestado de abajo, aclarando tu repo en `ARTEFACTO`.
 
-## En el ciclo
+## Como Obrero de `resolver-proyecto`
 
-Si te despacha `ciclo-ticket`, te van a retomar en cada vuelta con lo que falló. Tus notas
-las lee el revisor. Lo que la revisión marque como bloqueante lo corregís vos, solo en lo
-marcado, y después corre un GREEN nuevo. `sin-progreso` está en `ciclo-ticket` § El
-implementador.
+Te despacha el Implementador del ticket (`clarabella:obrero`), uno por microservicio.
+Implementás **solo la Parte de tu repo**, en tu worktree, y anotás los desvíos del plan en
+`revision/notas-<ms>.md`. No corrés los casos: los corre el Implementador. Si te
+re-despacha con la salida cruda de un caso que falla, corregís solo eso.
 
 ## Skills especiales por tipo de cambio
 

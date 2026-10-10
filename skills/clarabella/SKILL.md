@@ -30,7 +30,9 @@ sus gates y formatos, y se respetan tal cual.
 | Implementar un plan ya aprobado | `clarabella:implementar-ticket` |
 | Revisar el plan y los tests (o la implementación) de un ticket, "revisá T#####", "chequeá la trazabilidad" | `clarabella:revisar-ticket` |
 | Revisar si la spec de un ticket está completa antes de arrancar, "escriturá la spec" | `clarabella:escribano` |
-| Que el desarrollo se repita solo hasta dar con la implementación correcta, "corré T##### en ciclo" | `clarabella:ciclo-ticket` |
+| Que Clarabella resuelva sola uno o más tickets, "resolvé estos tickets", "resolvelo solo" | `clarabella:resolver-proyecto` (se arranca con `claude --agent clarabella:coordinador`) |
+| Juzgar si la solución de un lote sirve, "¿vale la pena?" | `clarabella:juzgar-proyecto` (sesión aparte: `claude --agent clarabella:juez`) |
+| Resumir un ticket resuelto a mano, "resumí T#####" | `clarabella:resumir-ticket` |
 | Responder dudas de los agentes de un ticket desde las fuentes, "preguntale al baqueano" | `clarabella:baqueano` |
 | Correr los tests documentados | `clarabella:testear-ticket` |
 | Ver el diff de lo que cambió | `clarabella:mostrar-diff` |

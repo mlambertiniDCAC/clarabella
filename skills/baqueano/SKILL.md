@@ -37,25 +37,25 @@ hizo otro agente.
 |-------|--------|----------|
 | `RESPONDIDA` | Una fuente la contesta sin ambigüedad y nada de más autoridad la contradice | Responde con la cita textual y la ruta (ruta § sección, o ruta:línea) |
 | `PRECEDENTE` | El usuario ya decidió eso mismo en un ticket anterior o lo dejó en la memoria, y la spec no lo reabre | Responde con la cita del precedente. Va al usuario como aviso, con derecho a veto |
-| `DECISIÓN MENOR` | **Solo en el modo ciclo** (`ciclo-ticket`). Una decisión que nadie tomó, pero que no cambia nada que el usuario tenga que ver (ver abajo) | Decide siguiendo la convención del repo, cita el patrón que siguió (ruta:línea) y avisa. El usuario la ve en una lista con derecho a veto, como un precedente |
-| `PROVISORIA` | **Solo en el modo ciclo.** Una decisión mayor que la escritura no anticipó, fuera de terreno sensible | Arma el caso como para el usuario y elige la opción más conservadora (la que cambia menos, la más fácil de revertir, o la que respalda la práctica previa). El ciclo sigue sobre ese supuesto y el usuario la confirma o la veta al final (ver `ciclo-ticket`) |
-| `AL USUARIO` | Es una decisión nueva (de producto, de contrato, de alcance), la spec la deja abierta, o dos fuentes se contradicen. En el ciclo, solo si además es terreno sensible (financiero, permisos/seguridad, datos) | No responde. Prepara el caso: qué dice cada fuente (con cita), las opciones, y qué cambia con cada una |
+| `DECISIÓN MENOR` | **Solo en `resolver-proyecto`.** Una decisión que nadie tomó, pero que no cambia nada que el usuario tenga que ver (ver abajo) | Decide siguiendo la convención del repo, cita el patrón que siguió (ruta:línea) y avisa. El usuario la ve en una lista con derecho a veto, como un precedente |
+| `PROVISORIA` | **Solo en `resolver-proyecto`.** Una decisión mayor que la escritura no anticipó, fuera de terreno sensible | Arma el caso como para el usuario y elige la opción más conservadora (la que cambia menos, la más fácil de revertir, o la que respalda la práctica previa). El lote sigue sobre ese supuesto y el usuario la confirma o la veta en el cierre (ver `resolver-proyecto` § Provisorias) |
+| `AL USUARIO` | Es una decisión nueva (de producto, de contrato, de alcance), la spec la deja abierta, o dos fuentes se contradicen. En `resolver-proyecto`, solo si además es terreno sensible (financiero, permisos/seguridad, datos) | No responde. Prepara el caso: qué dice cada fuente (con cita), las opciones, y qué cambia con cada una |
 
 Una duda que la spec lista como "a cerrar dentro del ticket" no es `RESPONDIDA` aunque una
 fuente de menos autoridad la cierre: como mucho es `PRECEDENTE` (si la cerró el usuario) o
 `AL USUARIO` (si las fuentes chocan).
 
-**Qué es una decisión menor (solo en el ciclo).** Una elección entre formas de hacer algo
+**Qué es una decisión menor (solo en `resolver-proyecto`).** Una elección entre formas de hacer algo
 que ya existen en el repo, sin efecto visible: cuál de dos patrones vecinos copiar, dónde
 ubicar un archivo, cómo nombrar algo interno, cómo estructurar un test. **Nunca es menor**
 si cambia el contrato (rutas, campos, códigos de respuesta), el comportamiento que la spec
 describe, el alcance, permisos o seguridad, datos o migraciones, o si toca el módulo
 financiero (DCP / `ms-decampopagos`): eso es `AL USUARIO` siempre. Ante la duda entre menor
-y mayor, es mayor. Fuera del ciclo, esta clase no existe: todo eso va `AL USUARIO`.
+y mayor, es mayor. Fuera de `resolver-proyecto`, esta clase no existe: todo eso va `AL USUARIO`.
 
 **Terreno sensible: nunca menor ni provisoria.** El módulo financiero (DCP /
 `ms-decampopagos`), permisos y seguridad, y migraciones o cambios sobre datos existentes van
-siempre `AL USUARIO`, también en el ciclo.
+siempre `AL USUARIO`, también en `resolver-proyecto`.
 
 **`PRECEDENTE` exige una decisión registrada del usuario**: una entrada de
 `docs/<proyecto>/decisiones.md`, una memoria que diga que el usuario lo decidió, una
@@ -138,7 +138,7 @@ respuesta ("consulta C3"), y esa cita lleva a la fuente.
    - Si la duda ya está contestada en `escritura.md` o en `spec.md` § Decisiones de
      contrato, respondésela vos al agente citando el punto (`E3`). No hace falta buscar.
    - Si es literalmente un punto que la spec deja abierto y la escritura no cubrió, no hay
-     nada que buscar: va directo al usuario (o es provisoria, en el ciclo).
+     nada que buscar: va directo al usuario (o es provisoria, en `resolver-proyecto`).
    - Solo lo que queda, que sí requiere buscar en las fuentes, va al Baqueano.
 
    Despachá su Baqueano con esas dudas:
@@ -167,9 +167,9 @@ respuesta ("consulta C3"), y esa cita lleva a la fuente.
 ```
 ARTEFACTO: revision/consultas-{rol}.md
 RESPONDIDAS: <C1, C4 …>
-MENORES: (solo en el ciclo)
+MENORES: (solo en `resolver-proyecto`)
   - [C5] <qué decidió y qué convención siguió>
-PROVISORIAS: (solo en el ciclo)
+PROVISORIAS: (solo en `resolver-proyecto`)
   - [C6] <qué supuso, por qué es la más conservadora, qué alternativas había>
 PRECEDENTES:
   - [C2] <una línea: qué decidió el usuario y dónde>

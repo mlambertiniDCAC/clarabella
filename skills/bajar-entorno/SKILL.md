@@ -9,7 +9,8 @@ Cierra el ciclo que abrió `aislar-ticket`: apaga **lo que es del ticket y nada 
 que un ticket ya enviado a review no siga ocupando memoria de la VM de Docker (que es
 chica: varios servicios juntos se tumban entre sí por OOM).
 
-Es el paso 9 de `resolver-ticket`, después de `enviar-review`. También sirve standalone
+Va después del paso 8 de `resolver-ticket` (`enviar-review`) y en el cierre de
+`resolver-proyecto`. También sirve standalone
 cuando un ticket queda abandonado o pausado por mucho tiempo.
 
 ## Gate — el usuario lo pide o lo aprueba

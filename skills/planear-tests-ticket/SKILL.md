@@ -237,11 +237,11 @@ No usar sqlite/hsql: los microservicios están casados con MariaDB/MongoDB reale
 idéntica a la de desarrollo: se testea contra `db-test` (:3307) y para volver al estado original se
 recrea (`down -v && up`), sin tocar la base de desarrollo.
 
-## Modo orquestado (subagente de `resolver-ticket` o del motor `pipeline-desarrollo`)
+## Modo orquestado (subagente de `resolver-proyecto` o del motor `pipeline-desarrollo`)
 
 Esta skill tiene **dos modos**. El default es **standalone** (gate humano con
 `ExitPlanMode`, documentar recién tras la aprobación). Cuando la despacha un orquestador
-como subagente (`resolver-ticket` en su fase 1, como agente generativo, o el motor en su Fase 3), corre en
+como subagente (el generador de tests de `resolver-proyecto`, o el motor en su Fase 3), corre en
 **modo orquestado**, normalmente en paralelo con `planear-ticket`.
 
 Sabés que estás en modo orquestado si el prompt que te invoca lo dice explícitamente
@@ -278,7 +278,7 @@ ESTADO: completo | frenado-por-duda
 El resto de las reglas (tests de comportamiento, verificación contra DB de pruebas,
 teardown) aplican **igual** en modo orquestado.
 
-## Como agente generativo de `resolver-ticket` o `ciclo-ticket`
+## Como generador de `resolver-proyecto`
 
 Si el prompt dice que sos el agente generativo de los tests:
 

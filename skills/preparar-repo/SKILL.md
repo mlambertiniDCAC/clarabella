@@ -50,8 +50,8 @@ modo en que estés corriendo:
 - **Modo manual** (`resolver-ticket`, standalone): invocá `aislar-ticket`
   con el ticket y este repo, **solo la etapa A**: crea el `git worktree` en branch
   `T#####`. Es reanudable: si el worktree ya existe, lo reusa. La etapa B (contenedor +
-  DB del ticket) no la corras acá: `resolver-ticket` la despacha a un subagente en
-  background para no frenar el planeo. Si te invocan standalone, fuera de
+  DB del ticket) no la corras acá: la sesión de `resolver-ticket` (o el Coordinador de
+  `resolver-proyecto`) la corre con Bash en background para no frenar el planeo. Si te invocan standalone, fuera de
   `resolver-ticket`, hacé las dos etapas.
 - **Modo motor** (`pipeline-desarrollo`): invocá `entorno-ticket`. Clona el canónico
   (`git clone --shared`) en su propia lane (`.pipeline-lanes/T#####-{slug}/<ms>`), en branch

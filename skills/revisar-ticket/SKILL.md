@@ -1,6 +1,6 @@
 ---
 name: revisar-ticket
-description: Usar para revisar el plan y los tests de un ticket del workspace dcac-ia-context antes de implementar, o la implementación de un repo después de GREEN — primero corren los chequeos determinísticos (trazabilidad de los criterios CA#, reglas críticas sobre el diff) y después un revisor sonnet nuevo, de una sola pasada y con checklist fija, devuelve hasta 10 hallazgos con cita a una fuente. Es la fase 2 (Revisión) de resolver-ticket, el paso 3.4 y la revisión de cada vuelta de ciclo-ticket. Triggers — "revisá el plan y los tests de T#####", "revisá la implementación de T#####", "chequeá la trazabilidad de T#####". NO escribe plan ni tests, NO ejecuta tests, NO corrige.
+description: Usar para revisar el plan y los tests de un ticket del workspace dcac-ia-context antes de implementar, o la implementación de un repo después de GREEN — primero corren los chequeos determinísticos (trazabilidad de los criterios CA#, reglas críticas sobre el diff) y después un revisor sonnet nuevo, de una sola pasada y con checklist fija, devuelve hasta 10 hallazgos con cita a una fuente. El modo implementación es el paso 6 de resolver-proyecto; el modo plan-tests se usa a pedido. Triggers — "revisá el plan y los tests de T#####", "revisá la implementación de T#####", "chequeá la trazabilidad de T#####". NO escribe plan ni tests, NO ejecuta tests, NO corrige.
 ---
 
 # Revisar ticket
@@ -20,7 +20,7 @@ scripts (y GREEN, si cambió código).
 
 Todo va a `docs/{proyecto}/{tipo}/T#####-{slug}/revision/` (abajo, `{ticket}`).
 
-## Modo plan-tests (fase 2 de `resolver-ticket`)
+## Modo plan-tests (a pedido)
 
 ### 1. Trazabilidad
 
@@ -58,7 +58,7 @@ Agent(subagent_type: "general-purpose", model: "sonnet", description: "Revisión
   regresión.
 - El plan sigue las convenciones del servicio.
 
-## Modo implementación (paso 3.4 de `resolver-ticket`, vueltas de `ciclo-ticket`)
+## Modo implementación (paso 6 de `resolver-proyecto`)
 
 Por cada repo tocado (`<ms>`, worktree `.worktrees/T#####-{slug}/<ms>`):
 
@@ -66,7 +66,7 @@ Por cada repo tocado (`<ms>`, worktree `.worktrees/T#####-{slug}/<ms>`):
 
 ```bash
 wt=.worktrees/T#####-{slug}/<ms>
-base=master   # en el ciclo, desde la segunda revisión: base=$(cat {ticket}/revision/ultima-revision-<ms>.txt)
+base=master   # en una segunda revisión del mismo repo: base=$(cat {ticket}/revision/ultima-revision-<ms>.txt)
 tree=$(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/reglas.py --snapshot --worktree $wt)
 git -C $wt diff $base $tree > {ticket}/revision/diff-<ms>.patch
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/reglas.py --worktree $wt --base $base \
@@ -75,7 +75,7 @@ echo $tree > {ticket}/revision/ultima-revision-<ms>.txt
 ```
 
 El snapshot incluye los archivos nuevos sin trackear y no toca el index del repo.
-`ultima-revision-<ms>.txt` es la base del delta en la próxima revisión del ciclo: el
+`ultima-revision-<ms>.txt` es la base del delta en la próxima revisión del mismo repo: el
 revisor ve solo lo que cambió desde la última vez.
 
 `reglas.py` no mira tests, comentarios ni hosts de infraestructura (Graylog, Redis, DB…),
@@ -154,7 +154,7 @@ Agent(subagent_type: "general-purpose", model: "sonnet", description: "Corregir 
 ```
 
 - **No se retoma al agente del plan** (opus, con toda su exploración).
-- Los `DESACUERDOS` van al usuario en una línea cada uno (en el ciclo, al Baqueano: menor o
+- Los `DESACUERDOS` van al usuario en una línea cada uno (en `resolver-proyecto`, a `riesgos.md` del lote; o al Baqueano: menor o
   provisoria).
 - **No hay segunda revisión.** Después de corregir: `trazabilidad.py` de nuevo
   (plan-tests), o `reglas.py` y un GREEN nuevo si cambió código (implementación).
@@ -172,7 +172,7 @@ fila dice `<n> s · <n>k acumulados`: `hechos.py` lo cuenta como contexto retoma
 - **Retomar al autor para que corrija o se defienda** → corrige un sonnet nuevo con el
   artefacto y los hallazgos.
 - **Una segunda pasada del revisor sobre la corrección** → se verifica con scripts y GREEN.
-- **Revisar el diff completo en cada vuelta del ciclo** → desde la segunda, solo el delta
+- **Revisar el diff completo en una segunda revisión del mismo repo** → desde la segunda, solo el delta
   (`ultima-revision-<ms>.txt`).
 - **Usar `git diff master` a secas** → no ve los archivos nuevos sin trackear; usá el
   snapshot.
