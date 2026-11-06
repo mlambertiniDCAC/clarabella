@@ -37,7 +37,14 @@ docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md
 Identificá el/los repo/s a tocar (`microservicios/<ms>`, `webadmin/`, etc.). **El análisis
 del código se hace sobre la última master:** si el repo no está actualizado, prepararlo
 primero con `preparar-repo` (switch a master + pull). En el pipeline eso ya lo hizo
-la Fase 1 del motor. Consultá en este orden: `dcac-context/` → `CLAUDE.md` del repo →
+la Fase 1 del motor.
+
+**Primero, en qué quedó el proyecto.** Antes de leer documentación o código, traé el
+contexto del proyecto al que pertenece el ticket con `consultar-portfolio`: un bloqueo, una
+decisión vieja o un proyecto del que este es la v2 cambian el plan antes de que abras un
+archivo. Si no hay cerebro de contexto cargado, esa skill no bloquea y seguís.
+
+Después consultá en este orden: `dcac-context/` → `CLAUDE.md` del repo →
 código como fallback (regla del workspace).
 
 **Exploración en paralelo por repo.** Si el ticket toca más de un repo (p. ej. un ms +
