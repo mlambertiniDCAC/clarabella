@@ -16,8 +16,14 @@ El cerebro vive en un repo aparte. Resolvé su raíz en este orden: `$CEREBRO_RA
 Si no existe, **no es un error**: decile al usuario en una línea que el repo del cerebro
 no está y que sin él no hay dónde archivar. No lo crees por tu cuenta.
 
-El CLI es `<raiz>/bin/cerebro`. Todo lo que sigue pasa por ahí; nunca edites los archivos
-del almacén a mano.
+El CLI es `<raiz>/bin/cerebro` y resuelve el almacén desde su propia ubicación, así que
+**invocalo siempre por su ruta completa** (`~/projects/portfolio/bin/cerebro ...`) y no
+desde un `cerebro` suelto que dependa del directorio en que estés parado. Si lo corrés mal,
+archiva en el repo equivocado sin avisar.
+
+Todo lo que sigue pasa por el CLI. Editar los `.md` del almacén a mano no rompe nada —
+`escribir` conserva los campos y las secciones que agregues — pero el CLI es el camino
+normal.
 
 ## Paso 1 — Partir el bloque en unidades
 
@@ -49,6 +55,14 @@ nuevo para algo que ya está en la lista.**
 
 La prioridad la pone el usuario, nunca vos: el orden de los pendientes se cambia solo si
 él lo pide, con `cerebro pendiente-reordenar`.
+
+Si el bloque menciona un artifact que armaron juntos, registralo:
+`cerebro artifact-registrar <slug> --url "..." --titulo "..." --proposito "..."`.
+
+**Si te das cuenta de que archivaste algo en el proyecto equivocado**, no lo dejes:
+`cerebro anotacion-borrar <slug> <n>` saca la anotación (la 1 es la más nueva) y
+`cerebro desrelacionar <slug> <tipo> <otro>` borra las dos puntas de una relación. Después
+archivá de nuevo donde iba, o mandalo a la bandeja.
 
 ## Paso 3 — Sacar el dato sensible antes de archivar
 
@@ -94,6 +108,7 @@ proyecto por proyecto.
 - **Usar `estado` para una novedad de contenido** → eso es `anotar`; `estado` pisa el
   vigente.
 - **Archivar un importe o un CBU** → sale, con referencia a dónde vive.
-- **Editar los `.md` del almacén a mano** → todo por el CLI.
+- **Invocar `cerebro` sin su ruta completa** → archiva en el directorio en que estés.
+- **Dejar algo mal archivado porque ya se escribió** → hay comandos para deshacerlo.
 - **Escribir en `proyectos.dcac.ar`** → nunca desde acá, ni siquiera si la unidad dice que
   hay que actualizar el tablero. Eso el usuario lo pide aparte y a mano.

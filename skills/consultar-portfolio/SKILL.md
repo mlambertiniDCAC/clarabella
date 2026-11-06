@@ -17,7 +17,9 @@ Si no existe, **no es un error**: no lo menciones como problema, no sugieras cre
 le preguntes al usuario — seguí con la exploración normal (`dcac-context/`, el `CLAUDE.md`
 del repo, el código). Esta skill solo aplica donde ya hay un cerebro cargado.
 
-El CLI es `<raiz>/bin/cerebro` y devuelve JSON por stdout.
+El CLI es `<raiz>/bin/cerebro` y devuelve JSON por stdout. Resuelve el almacén desde su
+propia ubicación, así que **invocalo por su ruta completa**
+(`~/projects/portfolio/bin/cerebro ...`), nunca como un `cerebro` suelto.
 
 ## Cómo consultar
 
@@ -29,6 +31,8 @@ cerebro resumen --squad pagos                           # una fila por proyecto 
 cerebro resumen --desde 2026-11-01                      # lo que se movió desde esa fecha
 cerebro artifacts-ultimos                               # los artifacts más nuevos, con su proyecto
 cerebro bandeja-listar                                  # lo que quedó sin clasificar
+cerebro frescura                                        # de cuándo es el espejo del catálogo
+cerebro validar                                         # relaciones colgadas y archivos ilegibles
 ```
 
 Empezá siempre por `resolver-nombre`: el usuario nombra los proyectos como se le ocurre y
@@ -58,7 +62,9 @@ Si el ticket no se mapea a ningún proyecto del catálogo, seguí sin el cerebro
 - **No escribas desde acá.** Cargar es `cargar-portfolio`.
 - **El catálogo puede estar incompleto o viejo.** `cerebro resolver-nombre` devolviendo
   `desconocida` puede significar que falta poblar un squad, no que el proyecto no exista.
-  Mirá la fecha del catálogo antes de concluir que algo no está.
+  Mirá `cerebro frescura` antes de concluir que algo no está.
+- **`resumen` y `validar` informan los archivos ilegibles** en la clave `ilegibles`. Si
+  aparece alguno, decilo: ese proyecto quedó afuera de la respuesta.
 
 ## Errores comunes
 
