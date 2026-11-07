@@ -38,6 +38,11 @@ cerebro validar                                         # relaciones colgadas y 
 Empezá siempre por `resolver-nombre`: el usuario nombra los proyectos como se le ocurre y
 los slugs no coinciden con los nombres del tablero ni con las carpetas de `docs/`.
 
+El contenido vive en carpetas al lado de `proyecto.md`: `prd/`, `tickets/`,
+`desarrollo/T#####-<slug>/`, `soporte/`, `lotes/`, `notas/` y `adjuntos/`. `contexto` te da el
+índice; cuando necesites el detalle de un ticket o un PRD, leé el archivo de la carpeta.
+`transversal/<slug>/` tiene la misma forma para lo que no es de ningún proyecto.
+
 Para una pregunta de un solo proyecto, `contexto` alcanza. Para "qué está bloqueado" o
 "qué se movió", `resumen`. Para seguir una relación, `vecinos` y después `contexto` del
 vecino.

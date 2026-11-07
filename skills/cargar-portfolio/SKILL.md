@@ -25,6 +25,28 @@ Todo lo que sigue pasa por el CLI. Editar los `.md` del almacén a mano no rompe
 `escribir` conserva los campos y las secciones que agregues — pero el CLI es el camino
 normal.
 
+## Cómo está organizado un proyecto
+
+```
+proyectos/<slug>/
+  proyecto.md            el índice: estado, pendientes, relaciones, anotaciones, artifacts
+  decisiones.md          cuando el proyecto lo tiene
+  prd/                   PRD, tech-spec, gaps, discovery
+  tickets/               tickets redactados, todavía sin número
+  desarrollo/T#####-<slug>/
+  soporte/T#####-<slug>/
+  lotes/L-YYYY-MM-DD-<slug>/
+  notas/
+  adjuntos/              PDF, imágenes, diagramas, CSV
+```
+
+`transversal/<slug>/` tiene la misma forma y guarda lo que no es de ningún proyecto: el
+módulo dCP, el perímetro PSP, Keycloak, los UMLs, las vacunas de dependencias.
+
+Las novedades que cargás van a `proyecto.md` por el CLI. Las carpetas son documentos: si hay
+que guardar un archivo, va a la categoría que le corresponde y se menciona en una anotación,
+nunca se mete en `proyecto.md`.
+
 ## Paso 1 — Partir el bloque en unidades
 
 Una unidad es **una novedad**. Si el bloque dice tres cosas sobre dos proyectos, son tres
@@ -57,7 +79,9 @@ La prioridad la pone el usuario, nunca vos: el orden de los pendientes se cambia
 él lo pide, con `cerebro pendiente-reordenar`.
 
 Si el bloque menciona un artifact que armaron juntos, registralo:
-`cerebro artifact-registrar <slug> --url "..." --titulo "..." --proposito "..."`.
+`cerebro artifact-registrar <slug> --url "..." --titulo "..." --descripcion "..."`.
+La descripción es un párrafo, no una línea: decí qué resuelve y, si reemplaza a otro
+artifact anterior del mismo tema, cuál.
 
 **Si te das cuenta de que archivaste algo en el proyecto equivocado**, no lo dejes:
 `cerebro anotacion-borrar <slug> <n>` saca la anotación (la 1 es la más nueva) y

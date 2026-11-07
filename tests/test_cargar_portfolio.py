@@ -45,3 +45,16 @@ class CargarPortfolio(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class EstructuraDeProyecto(unittest.TestCase):
+    def test_la_skill_nombra_las_categorias_del_proyecto(self):
+        texto = SKILL.read_text(encoding='utf-8')
+        for categoria in ('prd/', 'tickets/', 'desarrollo/', 'soporte/', 'notas/', 'adjuntos/'):
+            self.assertIn(categoria, texto)
+
+    def test_la_skill_instruye_la_descripcion_del_artifact(self):
+        self.assertIn('--descripcion', SKILL.read_text(encoding='utf-8'))
+
+    def test_la_skill_nombra_el_ambito_transversal(self):
+        self.assertIn('transversal', SKILL.read_text(encoding='utf-8').lower())
