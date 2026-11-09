@@ -49,8 +49,13 @@ Desde Claude Code:
 Actualizar: `/plugin marketplace update clarabella`.
 
 Las skills quedan con prefijo del plugin (`/clarabella:resolver-ticket`). Se usan
-corriendo Claude Code desde el root de `dcac-ia-context`: asumen su estructura
-(`microservicios/`, `dcac-context/`, `docs/`, `.worktrees/`, `gestion/equipo/`).
+corriendo Claude Code desde el root de `dcac-ia-context`: asumen su estructura para el
+**código** (`microservicios/`, `dcac-context/`, `.worktrees/`, `gestion/equipo/`).
+
+El **material de cada ticket** —plan, tests, resumen, decisiones— ya no vive en el
+`docs/` del workspace: vive en el cerebro de contexto (`~/projects/portfolio`, o
+`$CEREBRO_RAIZ`), y la carpeta la resuelve `cerebro ubicar`. Así queda en un repo y no
+solo en la máquina. Sin cerebro, las skills que escriben frenan y lo dicen.
 
 ## Requisitos
 
