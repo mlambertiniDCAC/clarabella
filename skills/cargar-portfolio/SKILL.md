@@ -69,6 +69,12 @@ Cuatro clases, y cada una se archiva distinto:
 `estado` sobrescribe el vigente y manda el anterior al histórico. Usalo solo cuando la
 unidad dice dónde está parado el proyecto; una novedad de contenido es **info**, no estado.
 
+Cuando la unidad trae un dato de cabecera y no un párrafo, va al campo y no al estado:
+`cerebro campo <slug> etapa "Desarrollo"`, `prioridad "Crítica"`, `bloqueado si|no`. Los
+campos fijables son `etapa`, `prioridad`, `bloqueado`, `docs` y `tablero`. El nombre y el
+squad no se fijan por acá: salen de `catalogo.md`, y si el tablero los cambió se alinean
+con `cerebro sincronizar`.
+
 Si la unidad trae un pendiente nuevo, `cerebro pendiente-agregar <slug> --texto "..."`. Si
 cierra o desbloquea uno que ya existe, mirá el contexto con `cerebro contexto <slug>`,
 buscá su número de orden y usá `cerebro pendiente-estado <slug> <orden> <estado>`

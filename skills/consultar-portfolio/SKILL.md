@@ -32,7 +32,7 @@ cerebro resumen --desde 2026-11-01                      # lo que se movió desde
 cerebro artifacts-ultimos                               # los artifacts más nuevos, con su proyecto
 cerebro bandeja-listar                                  # lo que quedó sin clasificar
 cerebro frescura                                        # de cuándo es el espejo del catálogo
-cerebro validar                                         # relaciones colgadas y archivos ilegibles
+cerebro validar                                         # relaciones colgadas, ilegibles y derivas
 ```
 
 Empezá siempre por `resolver-nombre`: el usuario nombra los proyectos como se le ocurre y
@@ -70,6 +70,10 @@ Si el ticket no se mapea a ningún proyecto del catálogo, seguí sin el cerebro
   Mirá `cerebro frescura` antes de concluir que algo no está.
 - **`resumen` y `validar` informan los archivos ilegibles** en la clave `ilegibles`. Si
   aparece alguno, decilo: ese proyecto quedó afuera de la respuesta.
+- **`validar` tambien informa `derivas`**: proyectos cuyo nombre o squad en el cerebro ya no
+  coincide con `catalogo.md`, porque el tablero los cambio. Si hay, decilo y ofrecé
+  `cerebro sincronizar`, que los alinea sin tocar lo cargado. No lo corras sin que te lo
+  pidan: cambia archivos.
 
 ## Errores comunes
 
