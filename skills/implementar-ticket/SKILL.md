@@ -24,6 +24,7 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 |------|----------|----------|
 | Plan de desarrollo | Qué código escribir | Buscá `<carpeta>/plan.md`; si no está, pedilo |
 | Ticket `T#####` + proyecto | Ubicar el doc y la branch | Preguntá el ticket; el proyecto lo resuelve `cerebro ubicar` |
+| Plan de test (opcional) | El objetivo: dejar en GREEN los casos que en RED fallaban | Buscá `tests.md` en la misma carpeta del plan; útil, no bloqueante |
 
 **La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
 `~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
@@ -40,7 +41,6 @@ Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
 `desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
 decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
 ya tiene carpeta en otro proyecto: decilo.
-| Plan de test (opcional) | El objetivo: dejar en GREEN los casos que en RED fallaban | Buscá `tests.md` en la misma carpeta del plan; útil, no bloqueante |
 
 ## Reglas duras del workspace (no negociables)
 
