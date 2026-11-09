@@ -58,9 +58,9 @@ def main():
     p.add_argument('--timeout', type=int, default=300)
     a = p.parse_args()
     ticket = Path(a.ticket)
-    scripts = sorted(ticket.glob('casos/*/T*.sh'))
+    scripts = sorted(ticket.glob('casos/*/[TC]*.sh'))
     if not scripts:
-        raise ValueError(f'no hay casos en {ticket}/casos/<ms>/T##.sh')
+        raise ValueError(f'no hay casos en {ticket}/casos/<ms>/T##.sh o C##.sh')
     solo = {s.strip() for s in a.solo.split(',') if s.strip()}
     tests_md = ticket / 'tests.md'
     tests = tests_md.read_text(encoding='utf-8') if tests_md.is_file() else ''
