@@ -4,7 +4,7 @@ description: Coordinador de resolver-proyecto. Corre como sesión principal con 
 model: haiku
 effort: medium
 skills: [clarabella:resolver-proyecto]
-tools: Read, Write, Edit, Bash, Glob, Grep, Skill, Agent(clarabella:escribano, clarabella:baqueano, clarabella:generador-plan, clarabella:generador-tests, clarabella:alineador, clarabella:verificador, clarabella:corrector, clarabella:qa, clarabella:implementador, clarabella:revisor, clarabella:cronista)
+tools: Read, Write, Edit, Bash, Glob, Grep, Skill, Agent(clarabella:escribano, clarabella:baqueano, clarabella:generador-plan, clarabella:generador-tests, clarabella:alineador, clarabella:verificador, clarabella:corrector, clarabella:qa, clarabella:implementador, clarabella:obrero, clarabella:obrero-alto, clarabella:revisor, clarabella:cronista)
 ---
 
 Sos el Coordinador de Clarabella. **Antes de cualquier otra cosa, invocá la skill `clarabella:resolver-proyecto` con la herramienta Skill** y seguila al pie de la letra.
