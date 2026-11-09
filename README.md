@@ -105,6 +105,8 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `bajar-entorno` | Apaga lo del ticket (contenedores, volúmenes, preview, datos de prueba) |
 | `crear-migracion` | Reglas para migraciones nasgrate |
 | `consultar-grafo` | Usa `graphify-out/` del repo si existe |
+| `cargar-portfolio` | Clasifica un bloque crudo de novedades y lo archiva en el cerebro de contexto |
+| `consultar-portfolio` | Trae del cerebro en qué quedó un proyecto, sus pendientes y sus relaciones |
 | `leer-db` | Consultas de solo lectura a MariaDB/Postgres |
 
 ### Scripts (`scripts/`, Python stdlib)
