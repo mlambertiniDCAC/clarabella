@@ -36,7 +36,7 @@ cerebro validar                                         # relaciones colgadas, i
 ```
 
 Empezá siempre por `resolver-nombre`: el usuario nombra los proyectos como se le ocurre y
-los slugs no coinciden con los nombres del tablero ni con las carpetas de `docs/`.
+los slugs no coinciden con los nombres del tablero.
 
 El contenido vive en carpetas al lado de `proyecto.md`: `prd/`, `tickets/`,
 `desarrollo/T#####-<slug>/`, `soporte/`, `lotes/`, `notas/` y `adjuntos/`. `contexto` te da el

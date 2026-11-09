@@ -55,8 +55,24 @@ datos duros ya contados (economía por rol, con el contexto retomado aparte, RED
 GREEN, repos, hallazgos por revisión, decisiones textuales). Los números de la crónica
 salen de ahí, sin recalcular.
 
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
+```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
 Después, solo lo que haga falta para contar o chequear un dato puntual (todo en
-`docs/{proyecto}/{tipo}/T#####-{slug}/`):
+`<carpeta>/`):
 
 | Archivo | Para qué |
 |---------|----------|
@@ -157,8 +173,8 @@ es para el usuario y no necesita ese filtro.
 
 Por cada decisión que el usuario tomó en el ticket (las de la escritura y las de contrato
 en `spec.md`, los desacuerdos que decidió, los vetos a precedentes, las provisorias que confirmó o
-vetó, las de alcance), una entrada lista para agregar a
-`docs/{proyecto}/decisiones.md`:
+vetó, las de alcance), una entrada lista para agregar al `decisiones.md` del proyecto
+(La carpeta del proyecto la da el cerebro: `~/projects/portfolio/bin/cerebro ubicar --proyecto "<nombre>"` devuelve `carpeta`. El registro es `<carpeta-del-proyecto>/decisiones.md`):
 
 ```markdown
 ## <AAAA-MM-DD> · <tema en pocas palabras> · T#####
@@ -172,7 +188,7 @@ vetó, las de alcance), una entrada lista para agregar a
 Solo decisiones del usuario. Lo que decidió un agente y nadie validó no es precedente.
 
 Cuando el usuario valida la crónica, el orquestador agrega estas entradas al final de
-`docs/{proyecto}/decisiones.md` (lo crea si no existe). Si una entrada contradice a una
+`<carpeta-del-proyecto>/decisiones.md` (lo crea si no existe). Si una entrada contradice a una
 anterior, la anterior no se borra: queda, y la nueva dice a cuál reemplaza.
 
 ## Contrato de salida

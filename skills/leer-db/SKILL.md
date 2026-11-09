@@ -232,7 +232,9 @@ acceso restringido) **no** tienen ni deben tener esa documentación en
 momento, sin persistir su schema en ningún doc de este repo.
 
 Si el trabajo es sobre un ticket puntual (ej. T#####), revisar primero su
-`cronica.md`/`resumen.md`/`plan.md` en `docs/{proyecto}/{tipo}/T#####-.../` si existe — da
+`cronica.md`/`resumen.md`/`plan.md` en la carpeta del ticket dentro del cerebro de
+contexto (`~/projects/portfolio/bin/cerebro ubicar --proyecto "<nombre>" --tipo <tipo>
+--ticket T##### --nombre <slug>` la devuelve) si existe — da
 el contrato real (paths, campos esperados) antes de tocar la DB.
 
 ## Antes de escribir un JOIN: consultar el índice de relaciones

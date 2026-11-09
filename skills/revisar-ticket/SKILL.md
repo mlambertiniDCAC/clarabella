@@ -18,7 +18,23 @@ un agente arrastra todo su contexto (en T23815, 1,7M tokens de contexto retomado
 1,5M de subagentes nuevos). La verificación de una corrección es volver a correr los
 scripts (y GREEN, si cambió código).
 
-Todo va a `docs/{proyecto}/{tipo}/T#####-{slug}/revision/` (abajo, `{ticket}`).
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
+```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+Todo va a `<carpeta>/revision/` (abajo, `{ticket}`).
 
 ## Modo plan-tests (a pedido)
 

@@ -47,7 +47,9 @@ documentación del proyecto, planes y sentencias de tickets anteriores, el códi
 | Documentación | ¿Se actualiza algún doc como parte del ticket? |
 
 **4. Lo que ya está decidido.** Antes de preguntar algo, lo busca en
-`docs/<proyecto>/decisiones.md`, en la memoria y en las decisiones registradas de tickets
+el `decisiones.md` del proyecto en el cerebro de contexto
+(`~/projects/portfolio/bin/cerebro ubicar --proyecto "<nombre>"` devuelve `carpeta`; el
+registro es `<carpeta>/decisiones.md`), en la memoria y en las decisiones registradas de tickets
 anteriores (mismas reglas que el `baqueano`: precedente es solo una decisión registrada del
 usuario). Si ya está decidido, no lo pregunta: lo lista como precedente, con derecho a veto.
 

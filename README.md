@@ -49,8 +49,13 @@ Desde Claude Code:
 Actualizar: `/plugin marketplace update clarabella`.
 
 Las skills quedan con prefijo del plugin (`/clarabella:resolver-ticket`). Se usan
-corriendo Claude Code desde el root de `dcac-ia-context`: asumen su estructura
-(`microservicios/`, `dcac-context/`, `docs/`, `.worktrees/`, `gestion/equipo/`).
+corriendo Claude Code desde el root de `dcac-ia-context`: asumen su estructura para el
+**código** (`microservicios/`, `dcac-context/`, `.worktrees/`, `gestion/equipo/`).
+
+El **material de cada ticket** —plan, tests, resumen, decisiones— ya no vive en el
+`docs/` del workspace: vive en el cerebro de contexto (`~/projects/portfolio`, o
+`$CEREBRO_RAIZ`), y la carpeta la resuelve `cerebro ubicar`. Así queda en un repo y no
+solo en la máquina. Sin cerebro, las skills que escriben frenan y lo dicen.
 
 ## Requisitos
 
@@ -92,7 +97,7 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `juzgar-proyecto` | El Juez, en sesión aparte: dictamina si la solución de un lote sirve, antes de implementarla |
 | `preparar-repo` | Master actualizado + branch `T#####` aislada |
 | `aislar-ticket` | Worktree (etapa A) + contenedor Docker y DB propios del ticket (etapa B, en background) |
-| `planear-ticket` | Plan del ticket (`docs/{proyecto}/{tipo}/T#####-{slug}/plan.md`), con `Cubre: CA#` por Parte |
+| `planear-ticket` | Plan del ticket (`<carpeta del ticket en el cerebro>/plan.md`), con `Cubre: CA#` por Parte |
 | `planear-tests-ticket` | Plan de tests E2E (`tests.md`) desde la spec, sin mirar el plan, con columna `Criterio` |
 | `revisar-ticket` | Trazabilidad y reglas críticas por script, y un revisor sonnet de una pasada (plan y tests, o implementación); corrige un agente nuevo, nunca se retoma al autor |
 | `escribano` | Revisa la spec antes de arrancar y le pide al usuario, en una sola ronda, todo lo que falta definir |

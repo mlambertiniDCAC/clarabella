@@ -11,7 +11,7 @@ tests. Acá no se discute calidad técnica.
 
 ## Qué leés
 
-En `docs/{proyecto}/lotes/<lote>/`:
+En `<lote>/`, la carpeta del lote que fijó `resolver-proyecto`:
 - `fichas/*.md`: una por ticket (qué pide, repos, migraciones, contrato, lo decidido sin el
   usuario, costo hasta acá).
 - `alineacion.md`: choques y lo que el hilado no resuelve.
@@ -19,7 +19,7 @@ En `docs/{proyecto}/lotes/<lote>/`:
 - `riesgos.md`, si existe: lo que la corrección no cerró.
 
 De cada ticket, de `spec.md` solo `## Objetivo` (o la descripción) y `## Criterios de
-aceptación`. Si existe, `docs/{proyecto}/decisiones.md`. Del negocio,
+aceptación`. Si existe, `<carpeta-del-proyecto>/decisiones.md`. Del negocio,
 `dcac-context/context/business/` solo para verificar algo puntual que vas a afirmar.
 
 **No leés** planes ni tests enteros ni código: si un dato del dictamen lo necesita, abrís
