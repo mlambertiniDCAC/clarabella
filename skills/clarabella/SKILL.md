@@ -41,6 +41,7 @@ sus gates y formatos, y se respetan tal cual.
 | Bajar los contenedores del ticket, "apagá todo", que no consuma recursos al dope | `clarabella:bajar-entorno` |
 | Crear una migración de DB | `clarabella:crear-migracion` |
 | Consultar datos en una base (solo lectura) | `clarabella:leer-db` |
+| Buscar / arreglar vulnerabilidades en los repos Node, "vacuná los repos", "el prediff está rojo por npm audit" | `clarabella:vacunar-repos` |
 | Entender cómo funciona un servicio que tiene grafo | `clarabella:consultar-grafo` |
 
 Si el pedido es un ticket y el usuario no dijo en qué etapa está, arrancá por

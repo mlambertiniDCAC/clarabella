@@ -59,7 +59,8 @@ corriendo Claude Code desde el root de `dcac-ia-context`: asumen su estructura
 | Instalar el plugin y hablarle a Clarabella | ✔ | ✔ (el hook necesita Git Bash, que viene con Git for Windows) |
 | Flujo completo de tickets | ✔ | Recomendado dentro de **WSL2**: el flujo usa Docker, scripts bash, `python3`, `arc` y clientes `mariadb`/`psql` |
 
-Herramientas que usan las skills: `git`, Docker, `python3` (para `mostrar-diff`), Arcanist
+Herramientas que usan las skills: `git`, Docker (también para `trivy`, que no se instala
+en el host), `python3` (para `mostrar-diff`), Arcanist
 (`arc`) para enviar a review, y `mariadb` o `psql` para `leer-db` (en Postgres también puede
 usar un contenedor efímero).
 
@@ -108,6 +109,7 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `cargar-portfolio` | Clasifica un bloque crudo de novedades y lo archiva en el cerebro de contexto |
 | `consultar-portfolio` | Trae del cerebro en qué quedó un proyecto, sus pendientes y sus relaciones |
 | `leer-db` | Consultas de solo lectura a MariaDB/Postgres |
+| `vacunar-repos` | Scan de vulnerabilidades de los repos Node (npm audit + trivy), fix seguro validado y diff por repo |
 
 ### Scripts (`scripts/`, Python stdlib)
 
@@ -119,6 +121,9 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `contratos.py <tickets>` | Cruza lo que cada ticket expone y consume, detecta consumos sin dueño y ciclos, y da el orden del lote; `--deriva` al cierre |
 | `fichas.py <ticket>` | Ficha de un ticket para el juicio |
 | `correr_casos.py <ticket> [--red]` | RED y GREEN sin tokens: corre `casos/<ms>/T##.sh` |
+| `vacunas.py --worktree … --repo … --out …` | Scan de un repo Node en contenedores efímeros (npm audit + trivy fs/image/secret) normalizado a JSON chico; `--detectar` lista los repos Node, `--comandos` imprime el fix y la validación |
+
+`vacunar-repos` despacha un **Veterinario** (sonnet · medio) por repo.
 
 Tests: `python3 -m unittest discover -s tests -v`.
 

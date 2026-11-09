@@ -19,6 +19,7 @@ ROLES = {
     'obrero': ('sonnet', 'medium'),
     'obrero-alto': ('sonnet', 'high'),
     'revisor': ('sonnet', 'medium'),
+    'veterinario': ('sonnet', 'medium'),
     'cronista': ('sonnet', 'medium'),
     'juez': ('opus', 'high'),
 }
