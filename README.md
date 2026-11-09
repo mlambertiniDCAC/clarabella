@@ -92,7 +92,7 @@ Nada de esto viaja en el plugin: cada dev lo configura con sus propios datos.
 | `juzgar-proyecto` | El Juez, en sesión aparte: dictamina si la solución de un lote sirve, antes de implementarla |
 | `preparar-repo` | Master actualizado + branch `T#####` aislada |
 | `aislar-ticket` | Worktree (etapa A) + contenedor Docker y DB propios del ticket (etapa B, en background) |
-| `planear-ticket` | Plan del ticket (`docs/{proyecto}/{tipo}/T#####-{slug}/plan.md`), con `Cubre: CA#` por Parte |
+| `planear-ticket` | Plan del ticket (`<carpeta del ticket en el cerebro>/plan.md`), con `Cubre: CA#` por Parte |
 | `planear-tests-ticket` | Plan de tests E2E (`tests.md`) desde la spec, sin mirar el plan, con columna `Criterio` |
 | `revisar-ticket` | Trazabilidad y reglas críticas por script, y un revisor sonnet de una pasada (plan y tests, o implementación); corrige un agente nuevo, nunca se retoma al autor |
 | `escribano` | Revisa la spec antes de arrancar y le pide al usuario, en una sola ronda, todo lo que falta definir |

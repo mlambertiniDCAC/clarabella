@@ -1,6 +1,6 @@
 ---
 name: testear-ticket
-description: Usar cuando hay que EJECUTAR el testeo ya documentado de un ticket del workspace dcac-ia-context — existe el plan de test (docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md) y hay que correr los casos contra la DB de pruebas, en RED (antes de implementar, para confirmar que los tests discriminan) o en GREEN (después de implementar, para verificar la solución). Es la Fase 5 del motor pipeline-desarrollo y los pasos 3.1 (RED) y 3.3 (GREEN) de resolver-ticket, y corre en un subagente que no escribió el código. Triggers — "corré los tests documentados de T#####", "ejecutá el testeo de T#####", "probá la implementación de T#####". NO documenta tests (eso es planear-tests-ticket) ni escribe código (eso es implementar-ticket).
+description: Usar cuando hay que EJECUTAR el testeo ya documentado de un ticket del workspace dcac-ia-context — existe el plan de test en la carpeta del ticket dentro del cerebro de contexto y hay que correr los casos contra la DB de pruebas, en RED (antes de implementar, para confirmar que los tests discriminan) o en GREEN (después de implementar, para verificar la solución). Es la Fase 5 del motor pipeline-desarrollo y los pasos 3.1 (RED) y 3.3 (GREEN) de resolver-ticket, y corre en un subagente que no escribió el código. Triggers — "corré los tests documentados de T#####", "ejecutá el testeo de T#####", "probá la implementación de T#####". NO documenta tests (eso es planear-tests-ticket) ni escribe código (eso es implementar-ticket).
 ---
 
 # Ejecutar tests
@@ -41,10 +41,26 @@ y la DB. **No modificás código ni `tests.md`.** Ejecutás, verificás y clasif
 
 | Dato | De dónde | Si falta |
 |------|----------|----------|
-| Plan de test | `docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md` | Pedilo / avisá |
+| Plan de test | `<carpeta>/tests.md` | Pedilo / avisá |
 | Implementación (solo GREEN) | Branch `T#####` de los repos tocados | Si no está implementado, avisá |
 | Plan de desarrollo (solo GREEN, solo para clasificar) | `plan.md` de la carpeta del ticket | Sirve para distinguir un bug de un criterio que el plan no cubrió; no lo uses para cambiar qué se espera |
 | Acceso a la DB de pruebas | `db-test`, :3307 | Confirmá contenedor/credenciales; si no los tenés, pedíselos al usuario |
+
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
+```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
 
 ## Entorno aislado por ticket (cuando corre en el motor)
 
@@ -150,10 +166,10 @@ ESTADO: completo | frenado-por-duda
   corrección la hace la fase que corresponda.
 
 **Latido de actividad (feed en vivo):** appendeá una línea al
-`docs/{proyecto}/{tipo}/T#####-{slug}/.pipeline/actividad.jsonl` (solo en el motor) al arrancar cada caso y al clasificar una
+`<carpeta>/.pipeline/actividad.jsonl` (solo en el motor) al arrancar cada caso y al clasificar una
 falla, así el usuario ve el avance del testeo en el dashboard:
 ```bash
-echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"5\",\"actor\":\"subagente\",\"tipo\":\"test\",\"texto\":\"caso <X>: PASA/FALLA\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T#####-{slug}/.pipeline/actividad.jsonl
+echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"5\",\"actor\":\"subagente\",\"tipo\":\"test\",\"texto\":\"caso <X>: PASA/FALLA\",\"meta\":{}}" >> <carpeta>/.pipeline/actividad.jsonl
 ```
 
 ## Errores comunes

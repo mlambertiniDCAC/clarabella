@@ -36,21 +36,34 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 
 | Dato | Para qué | Si falta |
 |------|----------|----------|
-| Spec del ticket | Única base de qué se testea | Buscá `docs/{proyecto}/{tipo}/T<ticket>-<slug>/spec.md`; si no está, pedí el texto del ticket y guardalo ahí sin editarlo. **No leas `plan.md` aunque exista** |
+| Spec del ticket | Única base de qué se testea | Buscá `<carpeta>/spec.md`; si no está, pedí el texto del ticket y guardalo ahí sin editarlo. **No leas `plan.md` aunque exista** |
 | Contrato de la interfaz | Rutas, campos y códigos para escribir los curls | Sale de la spec. Si la spec no lo fija (ruta nueva, campo nuevo, código de error), **preguntá al usuario**: él lo fija y vale igual para el plan |
 | Ticket `T#####` | Nombre del archivo | Preguntá el número |
-| Proyecto destino | Carpeta dentro de `docs/` | Listá las carpetas de `docs/` y preguntá |
+| Proyecto destino | Resolverlo contra el catálogo del cerebro | No preguntes: `cerebro ubicar` lo resuelve |
 | Acceso a la DB de pruebas | Verificaciones del doc | Confirmá contenedor/credenciales (ver Acceso a la DB); si no los tenés, **pedíselos al usuario** |
 
 ## Convención de guardado (quick reference)
 
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
 ```
-docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md
-```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+El plan de test va en `<carpeta>/tests.md`.
 - `{tipo}`: `desarrollo` o `soporte`, el mismo del plan de desarrollo. En el motor está en `estado.json`; en el flujo manual lo fija el paso 0 de `resolver-ticket`.
-- `<slug>`: mismo tema que el plan de desarrollo, kebab-case (ej. `esquema-firmantes`).
-- Crear `{proyecto}/`, `{tipo}/` y `T<ticket>-<slug>/` si no existen.
-- Referencia de formato: la estructura de abajo. Si en `docs/` ya hay `tests.md` de tickets anteriores, podés mirar uno para mantener el mismo estilo.
+- `<slug-del-ticket>`: mismo tema que el plan de desarrollo, kebab-case (ej. `esquema-firmantes`).
+- Referencia de formato: la estructura de abajo. Si en el proyecto ya hay `tests.md` de tickets anteriores, podés mirar uno para mantener el mismo estilo.
 
 ## Acceso a la DB (para definir las verificaciones)
 
@@ -255,7 +268,7 @@ Sabés que estás en modo orquestado si el prompt que te invoca lo dice explíci
    el prompt trae análisis, hipótesis de solución o partes del plan, ignoralas y no leas
    `plan.md`.
 4. **Guardá el doc directo** en la ruta de la convención
-   (`docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md`), incluyendo la sección
+   (`<carpeta>/tests.md`), incluyendo la sección
    `## Escenarios BDD (Gherkin)`.
 5. **No decidas solo el fuera de alcance ni inventes credenciales, endpoints ni partes del
    contrato que la spec no fija.** Cada uno de esos es una **DUDA** (bloqueante). Un

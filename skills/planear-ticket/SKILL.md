@@ -6,7 +6,7 @@ description: Usar cuando el usuario arranca a desarrollar una tarea o feature so
 # Documentar desarrollo
 
 Ordena un desarrollo en 3 fases: **entender → planificar → documentar**.
-El plan mode nativo es el gate de aprobación: el plan se guarda en `docs/` recién **después**
+El plan mode nativo es el gate de aprobación: el plan se guarda en el cerebro recién **después**
 de que el usuario lo aprueba. **La skill termina ahí: NO implementes.** La implementación la declara
 el usuario explícitamente, en un paso aparte. Documentar el plan no es luz verde para codear.
 
@@ -18,18 +18,30 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 |------|----------|----------|
 | Problema / objetivo | Entender qué se desarrolla | Pedile que lo describa |
 | Ticket `T#####` | Nombre del archivo del plan | Preguntá el número |
-| Proyecto destino | Carpeta dentro de `docs/` | Listá las carpetas existentes en `docs/` y preguntá cuál (o si hay que crear una nueva) |
+| Proyecto destino | Resolverlo contra el catálogo del cerebro | No preguntes: `cerebro ubicar` lo resuelve, y si no resuelve archiva en `_sin-clasificar` |
 
 ## Convención de guardado (quick reference)
 
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
 ```
-docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md
-```
-- `{proyecto}`: carpeta de `docs/` (ej. el nombre del proyecto o del dominio del ticket).
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+El plan va en `<carpeta>/plan.md`.
 - `{tipo}`: `desarrollo` o `soporte`. En el motor está en `estado.json`; en el flujo manual lo fija el paso 0 de `resolver-ticket` (si no te lo pasaron, preguntá).
-- `<slug>`: kebab-case del título (`slugify(titulo)`), sin tildes/ñ (ej. `esquema-firmantes`).
-- Crear `{proyecto}/`, `{tipo}/` y `T<ticket>-<slug>/` si no existen.
-- Referencia de formato: la estructura de abajo. Si en `docs/` ya hay planes de tickets anteriores, podés mirar uno para mantener el mismo estilo.
+- `<slug-del-ticket>`: kebab-case del título (`slugify(titulo)`), sin tildes/ñ (ej. `esquema-firmantes`).
+- Referencia de formato: la estructura de abajo. Si en el proyecto ya hay planes de tickets anteriores (`<carpeta>/../`), podés mirar uno para mantener el mismo estilo.
 
 ## Workflow
 
@@ -184,7 +196,7 @@ Sabés que estás en modo orquestado si el prompt del que te invoca lo dice expl
 2. Hacé Fase 1 (entender, leyendo el código real) y Fase 2 (armar el plan) igual que
    siempre.
 3. **Guardá el plan directo** en la ruta de la convención
-   (`docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md`).
+   (`<carpeta>/plan.md`, la que devolvió `cerebro ubicar`).
 4. **No decidas nada sensible por tu cuenta.** Toda ambigüedad de documentación o de
    producto es una **DUDA** (bloqueante). Toda mejora de buenas prácticas que veas es una
    **SUGERENCIA** (no bloqueante). No las resuelvas: reportalas.
@@ -208,11 +220,11 @@ El resto de las reglas de la skill (leer código real, plan de implementación c
 exactas, no escalar el scope) aplican **igual** en modo orquestado.
 
 **Latido de actividad (para el feed en vivo del dashboard):** appendeá una línea al
-`docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/actividad.jsonl` en cada paso clave (arranco, leo tal
+`<carpeta>/.pipeline/actividad.jsonl` en cada paso clave (arranco, leo tal
 archivo/servicio, armo el plan, termino) para que el usuario vea que estás trabajando y no crea
 que está colgado:
 ```bash
-echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"2\",\"actor\":\"subagente\",\"tipo\":\"lectura\",\"texto\":\"leyendo <archivo>\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/actividad.jsonl
+echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"2\",\"actor\":\"subagente\",\"tipo\":\"lectura\",\"texto\":\"leyendo <archivo>\",\"meta\":{}}" >> <carpeta>/.pipeline/actividad.jsonl
 ```
 
 ## Como generador de `resolver-proyecto`
@@ -253,5 +265,5 @@ Si el prompt dice que sos el agente generativo del plan:
 - **Guardar el plan antes de que lo aprueben** → no. El gate es `ExitPlanMode`; documentás después.
 - **Arrancar a implementar apenas se documenta el plan** → no. La skill termina al guardar el plan;
   la implementación la declara el usuario en un paso aparte.
-- **Asumir el proyecto o el ticket** → si no te lo dieron, preguntá (listá las carpetas de `docs/`).
+- **Asumir el ticket** → si no te dieron el número, preguntá. El proyecto no se pregunta: lo resuelve `cerebro ubicar`.
 - **Pisar decisiones del usuario con "buenas prácticas"** → proponé y consultá, no impongas.

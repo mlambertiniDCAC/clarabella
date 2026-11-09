@@ -19,17 +19,28 @@ Antes del paso 1, definí con el usuario (preguntá lo que no venga en el pedido
 
 - **Ticket** `T#####` y un título corto → `{slug}` en kebab-case, sin tildes ni ñ.
 - **Tipo**: `desarrollo` o `soporte`. Si el ticket no lo deja claro, preguntá.
-- **Proyecto**: una carpeta de `docs/`. Listá las existentes y preguntá cuál, o si hay que
-  crear una nueva.
+- **Proyecto**: no se pregunta. `cerebro ubicar` lo resuelve contra el catálogo del cerebro,
+  y si no resuelve archiva en `_sin-clasificar` y deja la entrada en la bandeja.
 - **Texto del ticket**: la descripción y los criterios de aceptación tal cual vienen. Se
   guarda en `spec.md` y los criterios se numeran: `- [ ] **CA1** — <texto>`. Si no trae
   criterios claros, preguntá.
 
-Con eso queda fijada la carpeta del ticket, siempre en la **raíz del workspace
-dcac-ia-context** (el directorio donde están `dcac-context/` y `microservicios/`):
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
+```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+Con eso queda fijada la carpeta del ticket, dentro del cerebro:
 
 ```
-docs/{proyecto}/{tipo}/T#####-{slug}/
+<carpeta>/
 ├── spec.md      ← paso 0 (texto del ticket, criterios CA#)
 ├── plan.md      ← paso 2
 ├── tests.md     ← paso 3
@@ -45,7 +56,7 @@ guarda ahí. Si la sesión no está en la raíz del workspace, usá rutas absolu
 | # | Paso | Skill | Nota |
 |---|------|-------|------|
 | 1 | Identificar y preparar repos | `preparar-repo` (que a su vez delega en `aislar-ticket`) | Los repos suelen venir en el ticket (`microservicios/<nombre>`); si no, inferilos por el dominio del cambio antes de preparar. El canónico queda en master (solo lectura); la branch `T#####` vive aislada en un worktree + contenedor Docker propio (ver `aislar-ticket`) — así este ticket nunca pisa a otro que toque el mismo repo. |
-| 2 | Planear el desarrollo | `planear-ticket` | Con el `tipo` del paso 0: un ticket de soporte guarda su plan en `docs/{proyecto}/soporte/…`, no en `desarrollo/`. Cada Parte lleva `Cubre: CA#` y el plan, su sección `## Contrato`. |
+| 2 | Planear el desarrollo | `planear-ticket` | Con el `tipo` del paso 0: un ticket de soporte guarda su plan bajo `soporte/`, no bajo `desarrollo/`. Cada Parte lleva `Cubre: CA#` y el plan, su sección `## Contrato`. |
 | 3 | Documentar el plan de tests | `planear-tests-ticket` | Desde `spec.md`, **sin mirar el plan**: lo que no coincida aparece al testear. Columna `Criterio` en cada caso. |
 | 4 | Implementar | — (código directo, o `implementar-ticket` si preferís el modo guiado) | Codeá **dentro del worktree** (`.worktrees/T#####-{slug}/<ms>`) que dejó el paso 1, nunca en `microservicios/<ms>` directo. Levantá `mostrar-diff` en modo vivo (ver abajo) **antes** de empezar a codear y dejalo abierto: así revisás cada archivo a medida que se escribe, no al final. |
 | 5 | Validar contra el plan de tests | `testear-ticket` | Lo corrés en esta sesión, modo GREEN, a la vista del usuario. Si querés ver que los tests discriminan, corré el modo RED antes del paso 4. |

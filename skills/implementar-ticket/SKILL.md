@@ -1,6 +1,6 @@
 ---
 name: implementar-ticket
-description: Usar cuando el usuario (o el motor pipeline-desarrollo) quiere IMPLEMENTAR un ticket ya planeado sobre el workspace dcac-ia-context — existe un plan de desarrollo (docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md) y hay que escribir el código en la branch del ticket. Triggers — "implementá T#####", "dale, codeá el plan de T#####", "arrancá con la Parte 1 de T#####". Es la Fase 4 del motor. NO ejecuta el testeo documentado (eso es la Fase 5, testear-ticket).
+description: Usar cuando el usuario (o el motor pipeline-desarrollo) quiere IMPLEMENTAR un ticket ya planeado sobre el workspace dcac-ia-context — existe un plan de desarrollo en la carpeta del ticket dentro del cerebro de contexto y hay que escribir el código en la branch del ticket. Triggers — "implementá T#####", "dale, codeá el plan de T#####", "arrancá con la Parte 1 de T#####". Es la Fase 4 del motor. NO ejecuta el testeo documentado (eso es la Fase 5, testear-ticket).
 ---
 
 # Implementar desarrollo
@@ -22,8 +22,24 @@ Si falta alguno, **preguntá antes de avanzar** (no inventes):
 
 | Dato | Para qué | Si falta |
 |------|----------|----------|
-| Plan de desarrollo | Qué código escribir | Buscá `docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md`; si no está, pedilo |
-| Ticket `T#####` + proyecto | Ubicar el doc y la branch | Preguntá |
+| Plan de desarrollo | Qué código escribir | Buscá `<carpeta>/plan.md`; si no está, pedilo |
+| Ticket `T#####` + proyecto | Ubicar el doc y la branch | Preguntá el ticket; el proyecto lo resuelve `cerebro ubicar` |
+
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
+```
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
 | Plan de test (opcional) | El objetivo: dejar en GREEN los casos que en RED fallaban | Buscá `tests.md` en la misma carpeta del plan; útil, no bloqueante |
 
 ## Reglas duras del workspace (no negociables)
@@ -142,10 +158,10 @@ ESTADO: completo | frenado-por-duda
 - Listas vacías: `DUDAS: (ninguna)` / `SUGERENCIAS: (ninguna)`.
 
 **Latido de actividad (feed en vivo):** appendeá una línea al
-`docs/{proyecto}/{tipo}/T#####-{slug}/.pipeline/actividad.jsonl` (solo en el motor) cada vez que escribís un archivo o hacés un
+`<carpeta>/.pipeline/actividad.jsonl` (solo en el motor) cada vez que escribís un archivo o hacés un
 paso relevante — la Fase 4 puede tardar minutos y sin latido el dashboard parece colgado:
 ```bash
-echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"4\",\"actor\":\"subagente\",\"tipo\":\"escritura\",\"texto\":\"escribiendo <archivo>\",\"meta\":{}}" >> docs/{proyecto}/{tipo}/T#####-{slug}/.pipeline/actividad.jsonl
+echo "{\"ts\":\"$(date -u +%FT%TZ)\",\"fase\":\"4\",\"actor\":\"subagente\",\"tipo\":\"escritura\",\"texto\":\"escribiendo <archivo>\",\"meta\":{}}" >> <carpeta>/.pipeline/actividad.jsonl
 ```
 
 ## Errores comunes

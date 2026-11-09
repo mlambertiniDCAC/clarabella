@@ -1,6 +1,6 @@
 ---
 name: resumir-ticket
-description: Usar cuando un ticket del workspace dcac-ia-context ya fue planeado, implementado y testeado y hay que entregar un RESUMEN del desarrollo — consolida plan, tests y resultados de la ejecución del testeo (todos en `docs/{proyecto}/{tipo}/T#####-{slug}/`) en un solo documento. Triggers — "resumí el desarrollo de T#####", "armá el resumen de T#####", "cerrá T#####". Es la Fase 6 (última) del motor pipeline-desarrollo.
+description: Usar cuando un ticket del workspace dcac-ia-context ya fue planeado, implementado y testeado y hay que entregar un RESUMEN del desarrollo — consolida plan, tests y resultados de la ejecución del testeo (todos en la carpeta del ticket dentro del cerebro de contexto) en un solo documento. Triggers — "resumí el desarrollo de T#####", "armá el resumen de T#####", "cerrá T#####". Es la Fase 6 (última) del motor pipeline-desarrollo.
 ---
 
 # Resumen de desarrollo
@@ -16,21 +16,35 @@ Es la Fase 6 (última) del motor `pipeline-desarrollo`, pero también sirve stan
 
 | Dato | De dónde | Si falta |
 |------|----------|----------|
-| Plan de desarrollo | `docs/{proyecto}/{tipo}/T<ticket>-<slug>/plan.md` | Pedilo |
-| Plan de test | `docs/{proyecto}/{tipo}/T<ticket>-<slug>/tests.md` | Avisá si no está |
+| Plan de desarrollo | `<carpeta>/plan.md` | Pedilo |
+| Plan de test | `<carpeta>/tests.md` | Avisá si no está |
 | Reporte de implementación | Salida de la Fase 4 (`implementar-ticket`) | Pedilo |
 | Resultados del testeo | Salida de la Fase 5 (`testear-ticket`): casos que pasan/fallan | Pedilo |
-| Log de dudas (si el motor lo llevó) | `docs/{proyecto}/{tipo}/T<ticket>-<slug>/.pipeline/dudas.md` | Opcional |
+| Log de dudas (si el motor lo llevó) | `<carpeta>/.pipeline/dudas.md` | Opcional |
 
 **No inventes resultados.** El resumen refleja lo que realmente pasó: si un test falló o
 una fase quedó frenada por una duda, el resumen lo dice tal cual.
 
 ## Convención de guardado
 
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
 ```
-docs/{proyecto}/{tipo}/T<ticket>-<slug>/resumen.md
-```
-- Mismo `{tipo}` y `<slug>` que el plan de desarrollo (en el motor salen de `estado.json`; en el flujo manual, del paso 0 de `resolver-ticket`). Crear `T<ticket>-<slug>/` si no existe.
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+El resumen va en `<carpeta>/resumen.md`.
+- Mismo `{tipo}` y `<slug-del-ticket>` que el plan de desarrollo (en el motor salen de `estado.json`; en el flujo manual, del paso 0 de `resolver-ticket`).
 
 ## Workflow
 

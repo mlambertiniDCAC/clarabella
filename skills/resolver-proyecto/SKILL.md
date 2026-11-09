@@ -16,24 +16,43 @@ Coordinador: decíselo al usuario con ese comando y no sigas.
 
 ## El lote
 
+**La raíz del cerebro.** Resolvela en este orden: `$CEREBRO_RAIZ`, o
+`~/projects/portfolio`. Si no existe, **frená y decilo**: sin cerebro no hay dónde archivar
+el ticket. No escribas en un `proyectos/` relativo al directorio donde estás parado.
+
+**La carpeta del ticket la da el cerebro, no la armes a mano:**
+
+```bash
+~/projects/portfolio/bin/cerebro ubicar --proyecto "<lo que nombra el ticket>" \
+  --tipo <desarrollo|soporte> --ticket T##### --nombre <slug-del-ticket>
 ```
-docs/{proyecto}/lotes/L-<AAAA-MM-DD>-<slug>/      ({lote})
+
+Devuelve `carpeta` (ya creada), `slug` y `certeza`. Si `certeza` es `ambigua` o
+`desconocida`, el material va igual a `_sin-clasificar` y queda una entrada en la bandeja:
+decilo en el informe y seguí, **no frenes a preguntar**. Si devuelve `duplicado`, ese ticket
+ya tiene carpeta en otro proyecto: decilo.
+
+El lote cuelga del proyecto; `cerebro ubicar --proyecto "<nombre>" --tipo lotes
+--ticket L-<AAAA-MM-DD> --nombre <slug>` devuelve su carpeta.
+
+```
+<lote>/      L-<AAAA-MM-DD>-<slug> bajo lotes/ del proyecto
 ├── estado.json   ├── registro.md   ├── contratos.txt   ├── alineacion.md
 ├── riesgos.md    ├── fichas/       ├── dictamen.md     └── cierre.md
-docs/{proyecto}/{tipo}/T#####-{slug}/             ({ticket}, uno por ticket)
+<ticket>/    T#####-{slug} bajo {tipo}/ del proyecto, uno por ticket
 ```
 
 `estado.json`:
 
 ```json
 {
-  "lote": "L-2026-10-09-permisos", "proyecto": "permisos-psp", "carpeta": "docs/permisos-psp/lotes/L-2026-10-09-permisos",
+  "lote": "L-2026-10-09-permisos", "proyecto": "permisos-psp", "carpeta": "<cerebro>/proyectos/back-permisos-psp/lotes/L-2026-10-09-permisos",
   "paso": "0-armar",
   "juicio": true,
   "presupuesto": {"vueltas_green": 8},
   "orden": [],
   "tickets": {
-    "T23815": {"tipo": "desarrollo", "slug": "tablas-y-repositorios", "carpeta": "docs/permisos-psp/desarrollo/T23815-tablas-y-repositorios",
+    "T23815": {"tipo": "desarrollo", "slug": "tablas-y-repositorios", "carpeta": "<cerebro>/proyectos/back-permisos-psp/desarrollo/T23815-tablas-y-repositorios",
                "repos": ["ms-psp"], "worktrees": {"ms-psp": ".worktrees/T23815-tablas-y-repositorios/ms-psp"},
                "estado": "spec"}
   },
@@ -61,7 +80,7 @@ tokens de su notificación:
 ## Paso 0 — Armar el lote
 
 1. Preguntale al usuario, en un solo mensaje: los tickets (`T#####` y título), el tipo de
-   cada uno, el proyecto (una carpeta de `docs/`), el texto de cada ticket, el presupuesto
+   cada uno, el proyecto (lo resuelve `cerebro ubicar`), el texto de cada ticket, el presupuesto
    (default: 8 vueltas de GREEN por ticket) y si hay juicio (default: sí con dos o más
    tickets; con uno, que elija).
 2. Creá `{lote}`, `estado.json`, `registro.md` y la carpeta de cada ticket con su

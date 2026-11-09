@@ -19,11 +19,11 @@ ninguna fuente resuelve, no elige: arma el caso para el usuario.
 | # | Fuente | Para qué sirve |
 |---|--------|----------------|
 | 1 | `spec.md` del ticket, incluida `## Decisiones de contrato` | Lo pedido. Manda sobre todo lo demás, salvo lo que la spec deja explícitamente abierto |
-| 2 | Decisiones previas del usuario. **Primero `docs/<proyecto>/decisiones.md`** (el registro que alimenta el `cronista` al cerrar cada ticket; si una entrada dice "Reemplaza a", vale la más nueva). Después la memoria persistente (`~/.claude/projects/<workspace>/memory/`, empezando por `MEMORY.md`) y las `cronica.md` / `resumen.md` / `plan.md` / `sentencia.md` de tickets anteriores en `docs/<proyecto>/` | **Precedentes**: lo que el usuario ya decidió sobre el mismo tema |
+| 2 | Decisiones previas del usuario. **Primero `<carpeta>/decisiones.md`**, con la carpeta del proyecto en el cerebro de contexto (`~/projects/portfolio/bin/cerebro ubicar --proyecto "<nombre>"` devuelve `carpeta`) (el registro que alimenta el `cronista` al cerrar cada ticket; si una entrada dice "Reemplaza a", vale la más nueva). Después la memoria persistente (`~/.claude/projects/<workspace>/memory/`, empezando por `MEMORY.md`) y las `cronica.md` / `resumen.md` / `plan.md` / `sentencia.md` de tickets anteriores, bajo `<carpeta>/desarrollo/` y `<carpeta>/soporte/` | **Precedentes**: lo que el usuario ya decidió sobre el mismo tema |
 | 3 | `product-dcac/00_context/` si existe | Reglas de negocio y flujos |
 | 4 | `dcac-context/` | Reglas, servicios, convenciones, ownership de tablas, `api/*.json` |
-| 5 | `docs/<proyecto>/` (PRD, notas, tickets) | Contexto del proyecto |
-| 6 | `CLAUDE.md` y `docs/` de cada repo | Convenciones del repo. Ojo: los `docs/` de un repo pueden estar desactualizados; contrastá con el código |
+| 5 | `cerebro contexto <slug>` y después `<carpeta>/prd/`, `<carpeta>/notas/`, `<carpeta>/tickets/` | Contexto del proyecto |
+| 6 | `CLAUDE.md` y el `docs/` **de cada repo de microservicio** | Convenciones del repo. Ojo: pueden estar desactualizados; contrastá con el código |
 | 7 | El código (canónico en master o el worktree que indique el orquestador) | Cómo se comporta algo hoy |
 | 8 | La base de datos, solo con `leer-db` (solo lectura) | Esquemas y datos reales. Nunca escribe |
 
@@ -58,7 +58,7 @@ y mayor, es mayor. Fuera de `resolver-proyecto`, esta clase no existe: todo eso 
 siempre `AL USUARIO`, también en `resolver-proyecto`.
 
 **`PRECEDENTE` exige una decisión registrada del usuario**: una entrada de
-`docs/<proyecto>/decisiones.md`, una memoria que diga que el usuario lo decidió, una
+`<carpeta>/decisiones.md`, una memoria que diga que el usuario lo decidió, una
 "Decisión del usuario" en una sentencia, o una `## Decisiones de contrato` de otra spec. Lo
 que un plan, unos tests o una nota de otro ticket hicieron por su cuenta es práctica, no
 precedente: se cita en el caso `AL USUARIO` ("así lo resolvió T#####"), pero no cierra
@@ -189,7 +189,7 @@ ESTADO: completo
 - **Leer el plan o los tests de un agente para contestarle al otro** → filtra el trabajo
   entre agentes.
 - **Contestar las dudas de los dos agentes en un mismo archivo** → uno por agente.
-- **Confiar en los `docs/` de un repo sin mirar el código** → pueden estar viejos.
+- **Confiar en el `docs/` de un repo de microservicio sin mirar el código** → pueden estar viejos.
 - **Llamar precedente a lo que otro ticket hizo por su cuenta** → precedente es solo una
   decisión registrada del usuario; lo demás es práctica y va en el caso `AL USUARIO`.
 - **Escribir un "dónde busqué" que no recorriste** → el usuario lo va a notar al seguir la cita.
