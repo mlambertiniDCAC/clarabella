@@ -42,6 +42,8 @@ sus gates y formatos, y se respetan tal cual.
 | Crear una migración de DB | `clarabella:crear-migracion` |
 | Consultar datos en una base (solo lectura) | `clarabella:leer-db` |
 | Buscar / arreglar vulnerabilidades en los repos Node, "vacuná los repos", "el prediff está rojo por npm audit" | `clarabella:vacunar-repos` |
+| Cargar novedades al cerebro de contexto, "cargá esto al portfolio", notas de una reunión, un audio pasado a texto, un pegote de Gemini | `clarabella:cargar-portfolio` |
+| Saber en qué quedó un proyecto, sus pendientes o sus relaciones, "qué sabés de PLAFT", "qué hay de nuevo en Pagos" | `clarabella:consultar-portfolio` |
 | Entender cómo funciona un servicio que tiene grafo | `clarabella:consultar-grafo` |
 
 Si el pedido es un ticket y el usuario no dijo en qué etapa está, arrancá por
